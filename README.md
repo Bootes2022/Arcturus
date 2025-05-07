@@ -9,14 +9,14 @@
 Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestrating low-cost, multi-cloud resources to deliver **high-performance, low-latency networking** without vendor lock-in. Unlike traditional cloud-bound GA services, Arcturus achieves **1.7× faster acceleration at 71% lower cost** while maintaining >80% resource efficiency.  
 
 **Ideal for**:  
-- Real-time interactive applications (gaming, video conferencing)  
+- Real-time interactive applications  
 - Cost-sensitive large-scale deployments  
 - Multi-cloud or hybrid-cloud environments  
 
 ## ✨ Key Features  
 | **Feature**               | **Advantage**                                                                 |
 |---------------------------|-------------------------------------------------------------------------------|
-| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, Azure, etc.)    |
+| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
 | **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
 | **Cost Efficiency**       | Reduces expenses by 71% vs. commercial GA services                            |
 | **Scalability**          | Proven at million-RPS workloads with stable QoS                              |
@@ -24,16 +24,29 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 ## 🏗️ Architecture  
 ```mermaid
 graph TD
-    A[Client] --> B[Arcturus Forwarding Plane]
-    B --> C{Multi-Cloud Proxies}
-    C --> D[Cloud Provider 1]
-    C --> E[Cloud Provider 2]
-    C --> F[...]
-    B --> G[Arcturus Scheduling Plane]
-    G --> H[Load Balancing]
-    G --> I[Latency Optimization]
+    %% ===== Core System =====
+    A[Arcturus] --> B[Forwarding Plane]
+    A --> C[Scheduling Plane]
+    
+    %% ===== Forwarding Components =====
+    B --> D[Proxy Nodes]
+    D --> E[Connection Pooling]
+    D --> F[Packet Aggregation]
+    D --> G[Segment Routing]
+    
+    %% ===== Scheduling Components =====
+    C --> H[Last-Mile Scheduling]
+    C --> I[Middle-Mile Scheduling]
+    H --> J[Load Balancer]
+    I --> K[Path Selector]
+    
+    %% ===== Styling =====
+    style B fill:#e1f5fe,stroke:#039be5
+    style C fill:#e8f5e9,stroke:#43a047
+    style H fill:#fff3e0,stroke:#fb8c00
+    style I fill:#f3e5f5,stroke:#8e24aa
 ```
-## Quick Start Guide
+##🚀 Quick Start Guide
 
 ### 📋 Prerequisites
 | Requirement       | Version  | Verification Command       |
@@ -43,7 +56,7 @@ graph TD
 | Helm              | ≥3.11    | `helm version --short`      |
 
 ## 🛠️ Installation
-### Method A: Helm (Recommended)
+### Method : Helm 
 ```bash
 # Add Arcturus repo
 helm repo add arcturus https://charts.arcturus.io/stable
@@ -55,7 +68,7 @@ helm install arcturus arcturus/arcturus \
   --values https://raw.githubusercontent.com/your-repo/arcturus/main/config/production.yaml
 ```
 
-## Performance Benchmarks
+## 📊 Performance Benchmarks
 
 ## 🏆 Comparative Metrics
 ### Throughput (Requests/Second)
@@ -84,10 +97,3 @@ Requirements:
 - ℹ️ License and copyright notice preservation  
 - ℹ️ State changes  
 
-## 🖋️ Full Text
-```text
-Copyright [yyyy] [name of copyright owner]
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License...
-```
