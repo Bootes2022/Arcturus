@@ -1,4 +1,4 @@
-// metrics/handler.go
+// metric/handler.go
 package metrics
 
 import (

@@ -111,7 +111,7 @@ func (s *EtcdSync) SyncMetricsToEtcd(metrics *pb.Metrics) error {
 		region = "unknown"
 	}
 
-	key := fmt.Sprintf("data/regions/%s/%s/metrics", region, metrics.Ip)
+	key := fmt.Sprintf("data/regions/%s/%s/metric", region, metrics.Ip)
 
 	data, err := proto.Marshal(metrics)
 	if err != nil {
@@ -238,7 +238,7 @@ func (s *EtcdSync) handleDataUpdate(region, key string, value []byte) {
 
 	nodeIP := parts[3]
 
-	if strings.Contains(key, "/metrics") {
+	if strings.Contains(key, "/metric") {
 
 		s.handleMetricsUpdate(region, nodeIP, value)
 	} else if strings.Contains(key, "/probe_results/") {
@@ -252,7 +252,7 @@ func (s *EtcdSync) handleMetricsUpdate(region, nodeIP string, value []byte) {
 
 	metrics := &pb.Metrics{}
 	if err := proto.Unmarshal(value, metrics); err != nil {
-		log.Printf("metrics: %v", err)
+		log.Printf("metric: %v", err)
 		return
 	}
 
@@ -261,11 +261,11 @@ func (s *EtcdSync) handleMetricsUpdate(region, nodeIP string, value []byte) {
 
 	err := models.InsertMetricsInfo(s.db, metrics)
 	if err != nil {
-		log.Printf("metrics: %v", err)
+		log.Printf("metric: %v", err)
 		return
 	}
 
-	log.Printf(" %s metrics，: %s", nodeIP, region)
+	log.Printf(" %s metric，: %s", nodeIP, region)
 }
 
 func (s *EtcdSync) handleProbeResultsUpdate(sourceRegion, nodeIP, targetRegion string, value []byte) {
