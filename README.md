@@ -21,6 +21,32 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 | **Cost Efficiency**       | Reduces expenses by 71% vs. commercial GA services                            |
 | **Scalability**          | Proven at million-RPS workloads with stable QoS                              |
 
+## 🏗️ Architecture  
+```mermaid
+graph TD
+    %% ===== Core System =====
+    A[Arcturus] --> B[Forwarding Plane]
+    A --> C[Scheduling Plane]
+    
+    %% ===== Forwarding Components =====
+    B --> D[Proxy Nodes]
+    D --> E[Connection Pooling]
+    D --> F[Packet Aggregation]
+    D --> G[Segment Routing]
+    
+    %% ===== Scheduling Components =====
+    C --> H[Last-Mile Scheduling]
+    C --> I[Middle-Mile Scheduling]
+    H --> J[Load Balancer]
+    I --> K[Path Selector]
+    
+    %% ===== Styling =====
+    style B fill:#e1f5fe,stroke:#039be5
+    style C fill:#e8f5e9,stroke:#43a047
+    style H fill:#fff3e0,stroke:#fb8c00
+    style I fill:#f3e5f5,stroke:#8e24aa
+```
+
 
 ## 🚀 Quick Start Guide
 
