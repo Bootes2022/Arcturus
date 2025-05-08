@@ -1,85 +1,25 @@
 
-# Arcturus Global Acceleration Framework
+# Arcturus Scheduling Plane
 
-Arcturus is a **cloud-native** global acceleration framework designed to provide high-performance, low-latency path selection and decision-making with real-time network awareness. The framework integrates two main planes—**Forwarding Plane** and **Scheduling Plane**—to optimize data transmission and network resource management in a scalable and distributed manner.
+Arcturus implements a **Scheduling Plane** designed to provide high-performance, low-latency path selection and decision-making with real-time network awareness. This system leverages a **distributed approach** to achieve scalability and agility, addressing the limitations of traditional centralized architectures.
 
 ## Table of Contents
 - [Overview](#overview)
-- [Forwarding Plane](#forwarding-plane)
-  - [Forwarding Architecture](#forwarding-architecture)
-  - [Key Techniques](#key-techniques)
-    - [Enhanced Proxying](#enhanced-proxying)
-    - [LinUCB for Dynamic Optimization](#linucb-for-dynamic-optimization)
-    - [Bandit-based Decision Making](#bandit-based-decision-making)
-- [Scheduling Plane](#scheduling-plane)
-  - [Scheduling Architecture](#scheduling-architecture)
-  - [Key Concepts](#key-concepts)
-    - [Controller and Proxy Nodes](#controller-and-proxy-nodes)
-    - [Data Synchronization](#data-synchronization)
-    - [K-Nearest Neighbors (KNN)-Based Approach](#k-nearest-neighbors-knn-based-approach)
-    - [Regional Scheduling Groups](#regional-scheduling-groups)
+- [Scheduling Architecture](#scheduling-architecture)
+- [Key Concepts](#key-concepts)
+  - [Controller and Proxy Nodes](#controller-and-proxy-nodes)
+  - [Data Synchronization](#data-synchronization)
+  - [K-Nearest Neighbors (KNN)-Based Approach](#k-nearest-neighbors-knn-based-approach)
+  - [Regional Scheduling Groups](#regional-scheduling-groups)
 - [Node Region Database Table](#node-region-database-table)
 - [Installation](#installation)
 - [License](#license)
 
 ## Overview
 
-Arcturus integrates two crucial components—**Forwarding Plane** and **Scheduling Plane**—to achieve **Global Acceleration (GA)** by ensuring high-throughput, low-latency, and scalable networking. By adopting a **distributed approach**, Arcturus optimizes resource utilization and reduces compute bottlenecks, making it an ideal solution for real-time, multi-cloud applications.
+The **Scheduling Plane** in Arcturus enhances the system's global acceleration (GA) capabilities by addressing the need for rapid decision-making, efficient path switching, and real-time network state propagation. Unlike traditional centralized control centers that suffer from **compute bottlenecks** and **limited responsiveness**, the Scheduling Plane embraces edge scheduling to ensure scalability and fast route adjustment across a distributed network of proxy and controller nodes.
 
-## Forwarding Plane
-
-### Forwarding Architecture
-
-Arcturus’ **Forwarding Plane** is responsible for efficient data transport and optimized routing in GA scenarios.
-
-#### Data Proxying
-In the **data proxying** layer, the system uses lightweight techniques like **TCP connection pooling** and **multiplexing** to handle high RPS and small packet sizes.
-
-- **Ingress and Egress Nodes**: Represent user connections by assigning specific ports.
-- **Intermediate Nodes**: Forward traffic through a unified TCP tunnel, improving connection efficiency and reducing overhead.
-
-This architecture significantly optimizes the utilization of TCP connections, enhancing throughput and reducing latency.
-
-#### Network Routing
-In the **network routing** layer, Arcturus employs **segment routing** over the TCP protocol. Unlike label-based routing technologies like **MPLS** and **LDP**, segment routing offers simpler, more efficient routing by eliminating complex timing logic and reducing the risk of network instability.
-
-- **Protocol Stack Unloading and Loading**: Performed at the ingress and egress nodes.
-- **Segment Routing**: Enables fine-grained packet forwarding, improving resource utilization and enabling gradient descent control for optimal scheduling.
-
-### Key Techniques
-
-#### Enhanced Proxying
-Arcturus implements three key techniques to enhance proxying:
-1. **TCP Connection Pooling**: Optimizes the reuse of existing TCP connections to improve efficiency.
-2. **Multiplexing**: Allows multiple streams of data to be carried over a single connection, improving throughput and reducing overhead.
-3. **Packet Merging**: Merges small packets into larger ones to optimize network resource usage and improve transmission efficiency.
-
-Together, these techniques reduce connection overhead, optimize resource consumption, and increase overall throughput while maintaining control over latency.
-
-#### LinUCB for Dynamic Optimization
-To dynamically optimize key parameters such as **multiplexing sessions (Sp)**, **concurrency levels (Cp)**, and **packet merge timeout (Tp)**, Arcturus uses the **LinUCB (Linear Upper Confidence Bound)** algorithm. This algorithm allows the system to adaptively adjust parameters based on network and load conditions in real-time, ensuring efficient data transport and low-latency performance.
-
-##### Key Parameter Ranges:
-- **Sp**: Number of multiplexing sessions (range: 1–10)
-- **Cp**: Concurrency levels (range: 50–200)
-- **Tp**: Packet merge timeout (range: 1–5 ms)
-
-These parameters are adjusted dynamically to achieve a balance between resource consumption and processing capabilities.
-
-#### Bandit-based Decision Making
-The decision-making process for parameter optimization uses a **multi-arm bandit** approach, where each parameter set (Sp, Cp, Tp) is considered an "arm" in the bandit model. The system evaluates the performance of each configuration using key metrics such as **Requests Per Second (RPS)** and **Average Request Processing Time (ART)**. These metrics are normalized and combined into a **reward function** to guide the system towards the optimal configuration.
-
-- **Reward Function**: Combines normalized **RQPT (Requests Per Time Unit)** and **ART (Average Request Time)** to guide the system towards low-latency and high-throughput configurations.
-  ```text
-  Reward = wRQPT × RQPTnorm + wART × (1 − ARTnorm)
-  ```
-
-#### Bandit Exploration Strategy
-To efficiently explore the search space of possible configurations (Sp, Cp, Tp), the system utilizes **stress testing** to define realistic search ranges. Based on this approach, Arcturus can adjust parameters within these predefined ranges, dynamically finding the best configuration for any given network condition.
-
-## Scheduling Plane
-
-### Scheduling Architecture
+## Scheduling Architecture
 
 The core scheduling architecture consists of **controller nodes** and **proxy nodes**, each playing a crucial role in the global scheduling mechanism.
 
@@ -87,15 +27,21 @@ The core scheduling architecture consists of **controller nodes** and **proxy no
   
 - **Proxy Node**: The proxy node shares the same scheduling capabilities as the controller, but it works at the edge of the network, handling local decisions and interacting with the controller for global state synchronization.
 
-### Key Concepts
+### Key Functions:
+1. **Data Management**: Synchronizing network topology and user configurations across proxy nodes.
+2. **Scheduling**: Selecting optimal paths and adjusting routes in real-time.
+3. **Probing**: Probing the network for performance data (e.g., CPU load, memory usage, latency).
+4. **Reporting**: Aggregating and reporting performance metrics to the controller node for global coordination.
 
-#### Controller and Proxy Nodes
+## Key Concepts
+
+### Controller and Proxy Nodes
 The **controller** and **proxy nodes** form the backbone of the scheduling plane. The controller node processes global data, aggregates network performance statistics, and synchronizes the results with proxy nodes.
 
 - **Proxy nodes** perform similar scheduling tasks as the controller but are located at the edge of the network for efficient, local decision-making.
 - Every **5 seconds**, the proxy nodes send their compressed performance data to the central controller, which helps mitigate overreaction to network jitter.
 
-#### Data Synchronization
+### Data Synchronization
 Efficient **data synchronization** is critical in large-scale networks to ensure real-time updates without overwhelming the system with unnecessary traffic.
 
 - **Static Data**: Network topology and user configurations are propagated incrementally to proxy nodes.
@@ -103,14 +49,14 @@ Efficient **data synchronization** is critical in large-scale networks to ensure
 
 To reduce communication overhead and improve scalability, the **K-Nearest Neighbors (KNN)** approach is employed. This method partitions performance data into singular (outlier) and non-singular components. Non-singular data is aggregated (mean/median), thus significantly reducing synchronization overhead—up to 80% in some cases.
 
-#### K-Nearest Neighbors (KNN)-Based Approach
+### K-Nearest Neighbors (KNN)-Based Approach
 Arcturus utilizes a **KNN-based approach** to partition performance data into two components:
 - **Singular (Outlier) Components**: Data that deviates significantly from the norm.
 - **Non-Singular Components**: Data that is more stable and can be compressed.
 
 Only aggregate statistics (e.g., mean, median) of non-singular components are synchronized, which reduces the data transmitted across the network without sacrificing scheduling accuracy.
 
-#### Regional Scheduling Groups
+### Regional Scheduling Groups
 To further optimize performance and scalability, nodes are organized into **regional scheduling groups**. Each group elects a **master node** responsible for distributing tasks within the group, improving load balancing and resource management.
 
 - **Proxy Group**: Groups of proxy nodes synchronize and handle local scheduling decisions.
@@ -125,14 +71,14 @@ Before starting the system, you need to populate the `node_region` table in the 
 ### `node_region` Table Schema
 
 ```sql
--- 节点区域表
+-- node_region
 CREATE TABLE node_region (
    id INT AUTO_INCREMENT PRIMARY KEY,
-   ip VARCHAR(50) NOT NULL UNIQUE COMMENT '节点IP地址',
-   region VARCHAR(50) NOT NULL COMMENT '节点所属区域',
-   hostname VARCHAR(100) COMMENT '节点主机名',
-   description VARCHAR(255) COMMENT '节点描述信息',
-   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
+   ip VARCHAR(50) NOT NULL UNIQUE,
+   region VARCHAR(50) NOT NULL ,
+   hostname VARCHAR(100),
+   description VARCHAR(255),
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
