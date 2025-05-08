@@ -27,6 +27,8 @@ The core scheduling architecture consists of **controller nodes** and **proxy no
   
 - **Proxy Node**: The proxy node shares the same scheduling capabilities as the controller, but it works at the edge of the network, handling local decisions and interacting with the controller for global state synchronization.
 
+![Scheduling Architecture](assets/process.svg)
+
 ### Key Functions:
 1. **Data Management**: Synchronizing network topology and user configurations across proxy nodes.
 2. **Scheduling**: Selecting optimal paths and adjusting routes in real-time.
