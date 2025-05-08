@@ -37,14 +37,17 @@ graph TD
     %% ===== Scheduling Components =====
     C --> H[Last-Mile Scheduling]
     C --> I[Middle-Mile Scheduling]
-    H --> J[Load Balancer]
-    I --> K[Path Selector]
+    H --> J[Stability-Performance Trade-off]
+    I --> K[Conflict-Aware Path Carousel]
     
     %% ===== Styling =====
     style B fill:#e1f5fe,stroke:#039be5
     style C fill:#e8f5e9,stroke:#43a047
     style H fill:#fff3e0,stroke:#fb8c00
     style I fill:#f3e5f5,stroke:#8e24aa
+    %% Adjust font size for better readability
+    classDef default font-size:12px;
+    class A,B,C,D,E,F,G,H,I,J,K default;
 ```
 
 
