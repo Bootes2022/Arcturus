@@ -107,7 +107,7 @@ func TestSessionPool_AddRemove(t *testing.T) {
 		t.Errorf("，0，%d", count)
 	}
 
-	serverAddr := "server.example.com:8000"
+	serverAddr := "controller.example.com:8000"
 	serverSessionPool.mu.Lock()
 	serverSessionPool.sessions[serverAddr] = append(serverSessionPool.sessions[serverAddr], serverSession)
 	serverSessionPool.mu.Unlock()
@@ -153,7 +153,7 @@ func TestCloseAllSessions(t *testing.T) {
 
 	clientSession, serverSession := createPipeSessionPair(t)
 
-	clientAddr := "server.example.com:9000"
+	clientAddr := "controller.example.com:9000"
 	serverAddr := "client.example.com:8000"
 
 	clientSessionPool.mu.Lock()

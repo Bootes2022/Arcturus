@@ -1,7 +1,7 @@
 package models
 
 import (
-	pb "control/server/heartbeats/proto"
+	pb "control/controller/heartbeats/proto"
 	"database/sql"
 	"fmt"
 	"time"

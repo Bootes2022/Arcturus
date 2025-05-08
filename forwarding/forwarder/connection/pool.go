@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrClosed = errors.New("pool is closed")
+	ErrClosed = errors.New("pool_manager is closed")
 
 	ErrTimeout = errors.New("connection acquisition timed out")
 )

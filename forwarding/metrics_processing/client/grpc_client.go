@@ -149,8 +149,8 @@ func (g *GrpcClient) ReceiveConfig(ctx context.Context, req *protocol2.PushConfi
 	}
 
 	if resp.Status != "ok" {
-		log.Printf("Warning: server returned non-OK status for config push: %s, message: %s", resp.Status, resp.Message)
-		return fmt.Errorf("server error: %s", resp.Message)
+		log.Printf("Warning: controller returned non-OK status for config push: %s, message: %s", resp.Status, resp.Message)
+		return fmt.Errorf("controller error: %s", resp.Message)
 	}
 
 	updateStatus := &UpdateStatus{}
@@ -203,8 +203,8 @@ func (g *GrpcClient) ReportFault(ctx context.Context, faultInfo *protocol2.Fault
 	}
 
 	if resp.Status != "ok" {
-		log.Printf("Warning: server returned non-OK status for fault report: %s, message: %s", resp.Status, resp.Message)
-		return fmt.Errorf("server error: %s", resp.Message)
+		log.Printf("Warning: controller returned non-OK status for fault report: %s, message: %s", resp.Status, resp.Message)
+		return fmt.Errorf("controller error: %s", resp.Message)
 	}
 
 	log.Printf("Fault reported successfully: %s", faultInfo.FaultId)

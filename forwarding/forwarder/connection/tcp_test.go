@@ -303,7 +303,7 @@ func TestGetOrCreatePool(t *testing.T) {
 	poolMap = make(map[string]*Pool)
 	poolMu.Unlock()
 
-	addr := "test-server:8080"
+	addr := "test-controller:8080"
 
 	pool1, err := GetOrCreatePool(addr)
 	if err != nil {
@@ -325,7 +325,7 @@ func TestGetOrCreatePool(t *testing.T) {
 		AcquireTimeout: 1 * time.Second,
 	}
 
-	addr2 := "test-server-2:9090"
+	addr2 := "test-controller-2:9090"
 	pool3, err := GetOrCreatePool(addr2, customConfig)
 	if err != nil {
 		t.Fatalf(": %v", err)

@@ -317,7 +317,7 @@ func runBPRCore(nodes []*Node, totalReqIncrement int, redistributionProportion f
 
 		maxDPPNode.reqRate -= redistributionPool
 
-		// Line 7: Redistribute the pool to non-deactivated nodes except the max DPP node
+		// Line 7: Redistribute the pool_manager to non-deactivated nodes except the max DPP node
 		redistributeRequests(nodesCopy, maxDPPNode.id, deactivatedNodes, redistributionPool)
 
 		// Line 8: Update DPP values and CPU usage after redistribution
