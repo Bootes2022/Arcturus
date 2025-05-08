@@ -1,7 +1,7 @@
 package forwarder
 
 import (
-	packet "data/packet_handler.go"
+	packet "data/packet_handler"
 	"log"
 	"net/http"
 	"sync"

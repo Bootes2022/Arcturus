@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"data/forwarder/connection"
-	packet "data/packet_handler.go"
+	packet "data/packet_handler"
 	"fmt"
 	"github.com/xtaci/smux"
 	"io"

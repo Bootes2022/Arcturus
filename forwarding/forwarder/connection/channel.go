@@ -35,7 +35,7 @@ func NewChannelPool(config PoolConfig, factory Factory) (Pool, error) {
 		conn, err := factory()
 		if err != nil {
 			c.Close()
-			return nil, fmt.Errorf("factory is not able to fill the pool_manager: %s", err)
+			return nil, fmt.Errorf("factory is not able to fill the pool: %s", err)
 		}
 		c.conns <- conn
 	}

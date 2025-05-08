@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"data/packet_handler.go"
+	"data/packet_handler"
 )
 
 type BufferConfig struct {

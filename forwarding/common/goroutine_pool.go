@@ -13,7 +13,7 @@ func NewPool(config PoolConfig) (*ants.Pool, error) {
 
 	pool, err := ants.NewPool(config.MaxWorkers)
 	if err != nil {
-		log.Fatalf("Failed to create ants pool_manager: %v", err)
+		log.Fatalf("Failed to create ants pool: %v", err)
 		return nil, err
 	}
 
