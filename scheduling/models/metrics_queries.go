@@ -2,7 +2,7 @@ package models
 
 import (
 	"control/config"
-	pb "control/server/heartbeats/proto"
+	pb "control/controller/heartbeats/proto"
 	"database/sql"
 	"encoding/json"
 	"fmt"

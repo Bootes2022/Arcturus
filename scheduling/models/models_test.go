@@ -2,7 +2,7 @@ package models
 
 import (
 	"control/config"
-	"control/dao"
+	"control/middleware"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -12,7 +12,7 @@ import (
 
 func TestQueryIp(t *testing.T) {
 
-	db := dao.ConnectToDB()
+	db := middleware.ConnectToDB()
 	defer db.Close()
 	ips, _ := QueryIp(db)
 	fmt.Println("Query result:", ips)
@@ -24,13 +24,13 @@ func TestQueryIp(t *testing.T) {
 
 func TestCalculateAvgDelay(t *testing.T) {
 
-	pool := dao.CreateRedisPool()
+	pool := middleware.CreateRedisPool()
 	defer pool.Close()
 
 	conn := pool.Get()
 	defer conn.Close()
-	db := dao.ConnectToDB()
-	defer dao.CloseDB()
+	db := middleware.ConnectToDB()
+	defer middleware.CloseDB()
 	var i int64
 	for i = 1; i < 4; i++ {
 		key := "192.168.1.1:192.168.2.2"

@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"data/metric"
-	"data/path"
-	"data/proxy"
+	"data/forwarder"
+	"data/metrics_processing"
+	"data/router"
 	"flag"
 	"fmt"
 	"log"
@@ -56,7 +56,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go metric.StartDataPlane(ctx)
+	go metrics_processing.StartDataPlane(ctx)
 
 	go func() {
 		time.Sleep(1 * time.Minute)
@@ -64,7 +64,7 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			pathManager := path.GetInstance()
+			pathManager := router.GetInstance()
 			paths := pathManager.GetPaths()
 
 			if len(paths) > 0 {
@@ -77,8 +77,8 @@ func main() {
 			}
 		}
 	}()
-	go proxy.AccessProxyfunc()
-	go proxy.RelayProxyfunc()
+	go forwarder.AccessProxyfunc()
+	go forwarder.RelayProxyfunc()
 
 	<-signalChan
 	log.Println("，...")
@@ -87,6 +87,6 @@ func main() {
 }
 
 func dataPlane() {
-	proxy.AccessProxyfunc()
-	go proxy.RelayProxyfunc()
+	forwarder.AccessProxyfunc()
+	go forwarder.RelayProxyfunc()
 }

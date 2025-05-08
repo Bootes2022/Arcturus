@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"control/server/heartbeats"
+	"control/controller/heartbeats"
 )
 
 func main() {

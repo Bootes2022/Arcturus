@@ -1,7 +1,7 @@
 package common
 
 import (
-	"data/algorithms/k_shortest"
+	"data/scheduling_algorithms/k_shortest"
 	"fmt"
 	"log"
 	"sync"
