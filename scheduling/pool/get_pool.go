@@ -1,4 +1,4 @@
-package pool_manager
+package pool
 
 import (
 	"github.com/panjf2000/ants/v2"
@@ -74,7 +74,7 @@ func InitPoolLegacy(poolSize int, taskFunc func(interface{})) {
 		var err error
 		legacyPool, err = ants.NewPoolWithFunc(poolSize, taskFunc)
 		if err != nil {
-			log.Fatalf("Failed to create pool_manager: %v", err)
+			log.Fatalf("Failed to create pool: %v", err)
 		}
 	})
 }

@@ -43,7 +43,7 @@ func ConnectToDB() *sql.DB {
 		return nil
 	}
 
-	log.Println("Database connection pool_manager initialized successfully.")
+	log.Println("Database connection pool initialized successfully.")
 	return db
 }
 
@@ -51,9 +51,9 @@ func CloseDB() {
 	if db != nil {
 		err := db.Close()
 		if err != nil {
-			log.Println("Error closing the database connection pool_manager:", err)
+			log.Println("Error closing the database connection pool:", err)
 		} else {
-			log.Println("Database connection pool_manager closed.")
+			log.Println("Database connection pool closed.")
 		}
 	}
 }
@@ -84,9 +84,9 @@ func CloseRedisPool() {
 	if pool != nil {
 		err := pool.Close()
 		if err != nil {
-			log.Println("Error closing Redis connection pool_manager:", err)
+			log.Println("Error closing Redis connection pool:", err)
 		} else {
-			log.Println("Redis connection pool_manager closed.")
+			log.Println("Redis connection pool closed.")
 		}
 	}
 }

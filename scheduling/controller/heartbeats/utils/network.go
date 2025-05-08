@@ -3,7 +3,7 @@ package utils
 
 import (
 	"context"
-	"control/pool_manager"
+	"control/pool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"time"
@@ -23,7 +23,7 @@ func CreateGRPCConnection(addr string, timeout time.Duration) (*grpc.ClientConn,
 
 func ReleasePoolResources() {
 
-	pool_manager.ReleaseAllPools()
+	pool.ReleaseAllPools()
 }
 
 type ShutdownHandler struct {

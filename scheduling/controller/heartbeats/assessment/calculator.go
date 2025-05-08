@@ -6,7 +6,7 @@ import (
 	pb "control/controller/heartbeats/proto"
 	linkevaluate "control/link_evaluate"
 	"control/models"
-	"control/pool_manager"
+	"control/pool"
 	"database/sql"
 	"fmt"
 	"log"
@@ -143,11 +143,11 @@ func (ac *Calculator) calculateRegionAssessments() ([]*pb.RegionPairAssessment, 
 		}
 
 		ipPoolSize := runtime.NumCPU()
-		pool_manager.InitPool(ipPoolName, ipPoolSize, ipTaskFunc)
-		defer pool_manager.ReleasePool(ipPoolName)
+		pool.InitPool(ipPoolName, ipPoolSize, ipTaskFunc)
+		defer pool.ReleasePool(ipPoolName)
 
 		safeSubmitTask := func(task *IpPairTask) {
-			p := pool_manager.GetPool(ipPoolName)
+			p := pool.GetPool(ipPoolName)
 			if p == nil {
 				log.Printf(":  %s", ipPoolName)
 				ipWg.Done()
@@ -195,11 +195,11 @@ func (ac *Calculator) calculateRegionAssessments() ([]*pb.RegionPairAssessment, 
 	}
 
 	poolSize := runtime.NumCPU() * 2
-	pool_manager.InitPool(pool_manager.RegionTasksPool, poolSize, regionTaskFunc)
-	defer pool_manager.ReleasePool(pool_manager.RegionTasksPool)
+	pool.InitPool(pool.RegionTasksPool, poolSize, regionTaskFunc)
+	defer pool.ReleasePool(pool.RegionTasksPool)
 
 	safeSubmitRegionTask := func(task *RegionPairTask) {
-		p := pool_manager.GetPool(pool_manager.RegionTasksPool)
+		p := pool.GetPool(pool.RegionTasksPool)
 		if p == nil {
 			log.Printf(": ")
 			wg.Done()

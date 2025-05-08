@@ -6,7 +6,7 @@ import (
 	pb "control/controller/heartbeats/proto"
 	"control/controller/heartbeats/storage"
 	"control/controller/heartbeats/utils"
-	"control/pool_manager"
+	"control/pool"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -22,7 +22,7 @@ type Pusher struct {
 
 func NewPusher() *Pusher {
 
-	pool_manager.InitPool(pool_manager.ConfigPushPool, 100, pushTaskHandler)
+	pool.InitPool(pool.ConfigPushPool, 100, pushTaskHandler)
 
 	return &Pusher{
 		connections: make(map[string]*grpc.ClientConn),
@@ -51,7 +51,7 @@ func (p *Pusher) PushToAllNodes(nodeList *pb.NodeList, fileManager *storage.File
 
 		tasks := fileManager.GetNodeTasks(ip)
 
-		configPool := pool_manager.GetPool(pool_manager.ConfigPushPool)
+		configPool := pool.GetPool(pool.ConfigPushPool)
 		if configPool != nil {
 			err := configPool.Invoke([]interface{}{ip, nodeList, tasks, domainIPMappings, p})
 			if err != nil {
@@ -133,5 +133,5 @@ func (p *Pusher) Release() {
 	}
 	p.connections = make(map[string]*grpc.ClientConn)
 
-	pool_manager.ReleasePool(pool_manager.ConfigPushPool)
+	pool.ReleasePool(pool.ConfigPushPool)
 }

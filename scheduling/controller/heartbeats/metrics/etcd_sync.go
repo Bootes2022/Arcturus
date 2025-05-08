@@ -5,7 +5,7 @@ import (
 	pb "control/controller/heartbeats/proto"
 	"control/controller/heartbeats/storage"
 	"control/models"
-	"control/pool_manager"
+	"control/pool"
 	"database/sql"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
@@ -47,7 +47,7 @@ func processUpdateTask(data interface{}) {
 
 func InitPoolFromConfig(poolNum int) {
 
-	pool_manager.InitPool(EtcdSyncPool, poolNum, processUpdateTask)
+	pool.InitPool(EtcdSyncPool, poolNum, processUpdateTask)
 	log.Printf("etcd，: %d", poolNum)
 }
 
@@ -77,7 +77,7 @@ func NewEtcdSync(
 		watchCancels: make(map[string]context.CancelFunc),
 	}
 
-	if pool_manager.GetPool(EtcdSyncPool) == nil {
+	if pool.GetPool(EtcdSyncPool) == nil {
 		InitPoolFromConfig(50)
 	}
 
@@ -205,7 +205,7 @@ func (s *EtcdSync) watchRegion(region string) error {
 						Sync:   s,
 					}
 
-					etcdPool := pool_manager.GetPool(EtcdSyncPool)
+					etcdPool := pool.GetPool(EtcdSyncPool)
 					if etcdPool != nil {
 
 						if err := etcdPool.Invoke(updateData); err != nil {
