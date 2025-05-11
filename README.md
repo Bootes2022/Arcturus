@@ -19,10 +19,6 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 |---------------------------|-------------------------------------------------------------------------------|
 | **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
 | **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
-| **Cost Efficiency**       | Reduces expenses by 71% vs. commercial GA services                            |
-| **Scalability**          | Proven at million-RPS workloads with stable QoS                              |
-
-数据少一点
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
 
@@ -36,32 +32,18 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 | Tel Aviv → Washington     | 133         | 75            | 43.61%     |
 | Frankfurt → Osaka         | 190         | 104           | 45.26%     |
 | **Average Latency**          | **146.0**   | **83.3**      | **42.54%** |
-### GCP Global Load Balancing vs Arcturus Latency Comparison (New York Server Deployment)
 
-| Route                  | GCP Latency (ms) | Arcturus Latency (ms) | Improvement |
-|------------------------|------------------|-----------------------|-------------|
-| Bangalore → New York   | 267              | 142                   | 46.8%     |
-| Johannesburg → NY     | 176              | 128                   | 27.3%     |
-| Osaka → NY            | 213              | 111                   | 47.9%     |
-| Querétaro → NY        | 70               | 54                    | 22.9%     |
-| London → NY           | 74               | 61                    | 17.6%     |
-| Santiago → NY         | 170              | 97                    | 42.9%     |
-| Tel Aviv → NY         | 150              | 85                    | 43.3%     |
-| Frankfurt → NY        | 58               | 69                    | -19.0%    |
-| **Average Latency**    | **147.5**        | **93.4**             | **36.7%** |
+## Global Latency Comparison: GCP vs. AWS vs. Arcturus
 
-### AWS GA vs Arcturus Latency Comparison Latency Comparison (Los Angeles Server Deployment)
-
-| Route               | AWS GA (ms) | Arcturus (ms) | Improvement |
-|---------------------|-------------|---------------|-------------|
-| London → LA         | 135         | 91            | 32.6%      |
-| Frankfurt → LA      | 141         | 87            | 38.3%      |
-| Madrid → LA         | 152         | 99            | 34.9%      |
-| Tel Aviv → LA       | 176         | 136           | 22.7%      |
-| Johannesburg → LA   | 220         | 149           | 32.3%      |
-| Virginia → LA       | 73          | 43            | 41.1%      |
-| Singapore → LA      | 177         | 138           | 22.0%      |
-| **Average Latency** | **153.3**   | **106.3**     | **30.7%** |
+| Route                  | Provider   | Baseline Latency (ms) | Arcturus Latency (ms) | Improvement (%) |
+|------------------------|------------|----------------------|----------------------|-----------------|
+| Bangalore → New York   | GCP        | 267.0                | 142.0                | 46.8%          |
+| Johannesburg → NY      | GCP        | 176.0                | 128.0                | 27.3%          |
+| London → NY            | GCP        | 74.0                 | 61.0                 | 17.6%          |
+| London → Los Angeles   | AWS GA     | 135.0                | 91.0                 | 32.6%          |
+| Virginia → LA          | AWS GA     | 73.0                 | 43.0                 | 41.1%          |
+| Singapore → LA         | AWS GA     | 177.0                | 138.0                | 22.0%          |
+| **Average**           | —          | **150.3**            | **100.5**            | **31.2%**   |
 
 ## 🏗️ Architecture 
 重画
