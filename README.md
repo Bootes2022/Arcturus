@@ -19,8 +19,8 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 |---------------------------|-------------------------------------------------------------------------------|
 | **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
 | **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
-| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
-| **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
+| **High Performance**  | 1.7× faster acceleration​​ via streaming multiplexing, CMAB tuning, and segment routing |
+| **​​Stability Under Load​**| Lyapunov-based load balancing + Carousel Greedy algorithm for dynamic traffic spikes |
 
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
