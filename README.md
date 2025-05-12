@@ -7,18 +7,21 @@
 
 ## 📌 Overview  
 Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestrating low-cost, multi-cloud resources to deliver **high-performance, low-latency networking** without vendor lock-in. Unlike traditional cloud-bound GA services, Arcturus achieves **1.7× faster acceleration at 71% lower cost** while maintaining >80% resource efficiency.  
-目标
-**Ideal for**:  
+
+**Aim to**:  
 - Real-time interactive applications  
 - Cost-sensitive large-scale deployments  
 - Multi-cloud or hybrid-cloud environments  
 
-性能和稳定性
+
 ## ✨ Key Features  
 | **Feature**               | **Advantage**                                                                 |
 |---------------------------|-------------------------------------------------------------------------------|
 | **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
 | **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
+| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
+| **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
+
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
 
