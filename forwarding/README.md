@@ -1,98 +1,161 @@
+# Forwarding System
 
-# Arcturus Forwarding Plane
-
-Arcturus implements a **Forwarding Plane** designed to optimize data proxying, connection management, and network routing, tailored to meet the demanding needs of **Global Acceleration (GA)**. This system leverages lightweight, high-performance techniques such as **TCP connection pooling**, **multiplexing**, and **packet merging**, addressing the unique challenges of resource-constrained environments, high requests per second (RPS), and small packet sizes.
-
-## Table of Contents
-- [Overview](#overview)
-- [Forwarding Architecture](#forwarding-architecture)
-  - [Data Proxying](#data-proxying)
-  - [Network Routing](#network-routing)
-- [Key Techniques](#key-techniques)
-  - [Enhanced Proxying](#enhanced-proxying)
-  - [LinUCB for Dynamic Optimization](#linucb-for-dynamic-optimization)
-  - [Bandit-based Decision Making](#bandit-based-decision-making)
-- [Installation](#installation)
-- [License](#license)
+A distributed multi-node forwarding system designed for high-performance network traffic routing and optimization. The system leverages advanced techniques including TCP connection pooling, stream multiplexing, packet merging, and segment routing to achieve optimal throughput while maintaining low latency.
 
 ## Overview
 
-The **Forwarding Plane** in Arcturus aims to provide efficient data transport and optimized routing for global acceleration scenarios. It overcomes the limitations of traditional proxy technologies, such as **HTTP multiplexing**, **TCP connection pooling**, and **eBPF-based forwarding**, which offer limited flexibility in cloud environments due to strict security policies and resource constraints. Arcturus improves upon these existing solutions by utilizing a **custom-designed proxy** optimized for GA.
+The Forwarding System is a distributed architecture where multiple nodes work collaboratively to forward network traffic efficiently. Each node in the system deploys forwarding functionality and participates in a coordinated network that ensures optimal data transmission across different geographical locations.
 
-## Forwarding Architecture
+## Architecture
 
-The **Forwarding Architecture** consists of key elements for **data proxying** and **network routing**:
+The system consists of multiple forwarding nodes that communicate and coordinate through:
+- Centralized configuration management via etcd
+- Intelligent routing decisions based on real-time network conditions
+- Dynamic parameter optimization using machine learning algorithms
 
-### Data Proxying
-In the **data proxying** layer, the system uses lightweight techniques like **TCP connection pooling** and **multiplexing** to handle high RPS and small packet sizes. 
+## Key Features
 
-- **Ingress and Egress Nodes**: Represent user connections by assigning specific ports.
-- **Intermediate Nodes**: Forward traffic through a unified TCP tunnel, improving connection efficiency and reducing overhead.
+### 1. Etcd Cluster Information Synchronization
 
-This architecture significantly optimizes the utilization of TCP connections, enhancing throughput and reducing latency.
+The system uses etcd as a distributed key-value store for:
+- Centralized configuration management
+- Node discovery and health monitoring
+- Real-time synchronization of cluster state
+- Consistent routing table distribution
 
-### Network Routing
-In the **network routing** layer, Arcturus employs **segment routing** over the TCP protocol. Unlike label-based routing technologies like **MPLS** and **LDP**, segment routing offers simpler, more efficient routing by eliminating complex timing logic and reducing the risk of network instability.
+### 2. Inter-node Monitoring and Reporting
 
-- **Protocol Stack Unloading and Loading**: Performed at the ingress and egress nodes.
-- **Segment Routing**: Enables fine-grained packet forwarding, improving resource utilization and enabling gradient descent control for optimal scheduling.
+Our monitoring subsystem provides comprehensive visibility into system performance:
 
-## Key Techniques
+- **Node-to-node Probe Collection**: Continuous monitoring of network conditions between all node pairs
+- **Self-node Information Reporting**: Each node reports its own health metrics and resource utilization
+- **KNN Compression for Probe Data**: Efficient data compression using K-Nearest Neighbors algorithm to reduce bandwidth overhead while maintaining accuracy
 
-### Enhanced Proxying
-Arcturus implements three key techniques to enhance proxying:
-1. **TCP Connection Pooling**: Optimizes the reuse of existing TCP connections to improve efficiency.
-2. **Multiplexing**: Allows multiple streams of data to be carried over a single connection, improving throughput and reducing overhead.
-3. **Packet Merging**: Merges small packets into larger ones to optimize network resource usage and improve transmission efficiency.
+### 3. Advanced Data Forwarding
 
-Together, these techniques reduce connection overhead, optimize resource consumption, and increase overall throughput while maintaining control over latency.
+The forwarding functionality integrates three core optimization techniques:
 
-### LinUCB for Dynamic Optimization
-To dynamically optimize key parameters such as **multiplexing sessions (Sp)**, **concurrency levels (Cp)**, and **packet merge timeout (Tp)**, Arcturus uses the **LinUCB (Linear Upper Confidence Bound)** algorithm. This algorithm allows the system to adaptively adjust parameters based on network and load conditions in real-time, ensuring efficient data transport and low-latency performance.
+#### TCP Connection Management
+- **Connection Pooling**: Reuses existing TCP connections to reduce handshake overhead
+- **Stream Multiplexing**: Multiple data streams share single TCP connections
+- **Packet Merging**: Combines multiple small packets into larger ones for efficiency
 
-#### Key Parameter Ranges:
-- **Sp**: Number of multiplexing sessions (range: 1–10)
-- **Cp**: Concurrency levels (range: 50–200)
-- **Tp**: Packet merge timeout (range: 1–5 ms)
+#### Dynamic Parameter Optimization
 
-These parameters are adjusted dynamically to achieve a balance between resource consumption and processing capabilities.
+The system employs the LinUCB algorithm for real-time parameter tuning:
 
-### Bandit-based Decision Making
-The decision-making process for parameter optimization uses a **multi-arm bandit** approach, where each parameter set (Sp, Cp, Tp) is considered an "arm" in the bandit model. The system evaluates the performance of each configuration using key metrics such as **Requests Per Second (RPS)** and **Average Request Processing Time (ART)**. These metrics are normalized and combined into a **reward function** to guide the system towards the optimal configuration.
+**Key Parameters:**
+- **Sp (Sessions)**: Number of multiplexing sessions [1-10]
+- **Cp (Concurrency)**: Concurrency levels [50-200] in steps of 10
+- **Tp (Timeout)**: Packet merge timeout [1-5ms]
 
-- **Reward Function**: Combines normalized **RQPT (Requests Per Time Unit)** and **ART (Average Request Time)** to guide the system towards low-latency and high-throughput configurations.
-  ```text
-  Reward = wRQPT × RQPTnorm + wART × (1 − ARTnorm)
-  ```
+**Contextual Features:**
+- CPU utilization
+- Requests per second (RPS)
+- Requests processed per unit time (RQPT)
+- Average request processing time (ART)
 
-### Bandit Exploration Strategy
-To efficiently explore the search space of possible configurations (Sp, Cp, Tp), the system utilizes **stress testing** to define realistic search ranges. Based on this approach, Arcturus can adjust parameters within these predefined ranges, dynamically finding the best configuration for any given network condition.
+#### Segment Routing
 
-## Installation
+The system implements TCP-based segment routing with a custom protocol header:
 
-### Prerequisites
-| Requirement       | Version  | Verification Command       |
-|-------------------|----------|----------------------------|
-| Kubernetes        | ≥1.23    | `kubectl version --short`  |
-| Terraform         | ≥1.4     | `terraform --version`       |
-| Helm              | ≥3.11    | `helm version --short`      |
-
-### Installation Method: Helm
-```bash
-# Add Arcturus repo
-helm repo add arcturus https://charts.arcturus.io/stable
-
-# Install with production profile
-helm install arcturus arcturus/arcturus   --namespace arcturus-system   --create-namespace   --values https://raw.githubusercontent.com/your-repo/arcturus/main/config/production.yaml
+```
++-------------+--------+----------+------------+
+| packet_id   | offset | hop_list | hop_counts |
++-------------+--------+----------+------------+
 ```
 
-## License
-Arcturus is licensed under the **Apache 2.0 License**, which allows for:
-- Commercial use
-- Modification
-- Patent use
-- Private use
+**Header Fields:**
+- **packet_id**: Unique identifier for sub-requests within merged requests
+- **offset**: Relative position of each sub-request for accurate reconstruction
+- **hop_list**: List of intermediate nodes in the routing path
+- **hop_counts**: Number of hops for routing control
 
-### Requirements:
-- Preservation of license and copyright notice
-- Acknowledgment of changes made
+This standardized header structure enables efficient parsing and forwarding while minimizing computational overhead on proxy nodes.
+
+## System Benefits
+
+1. **Reduced Connection Overhead**: Through connection pooling and multiplexing
+2. **Enhanced Throughput**: Via intelligent packet merging and optimization
+3. **Controlled Latency**: Dynamic parameter tuning keeps latency within acceptable bounds
+4. **Scalability**: Distributed architecture supports horizontal scaling
+5. **Reliability**: Real-time monitoring and adaptive routing ensure high availability
+
+## Performance Optimization
+
+The system maintains optimal performance through:
+- Continuous monitoring of performance metrics
+- Machine learning-based parameter adaptation
+- Automatic traffic flow adjustment based on Lyapunov drift calculations
+- Real-time response to changing network conditions
+
+## Getting Started
+
+### Prerequisites
+
+- etcd cluster (v3.5+)
+- Linux-based operating system
+- Network access between all forwarding nodes
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Bootes2022/Arcturus/tree/main/forwarding
+
+# Install dependencies
+cd forwarding
+./install.sh
+
+# Configure etcd endpoints
+cp config.example.yaml config.yaml
+vim config.yaml
+```
+
+### Configuration
+
+Edit `config.yaml` to set:
+- etcd cluster endpoints
+- Node identification
+- Initial parameter values
+- Monitoring intervals
+
+### Running the System
+
+```bash
+# Start the forwarding service
+./forwarding-node start
+
+# Check status
+./forwarding-node status
+
+# View logs
+tail -f logs/forwarding.log
+```
+
+## Monitoring
+
+The system provides comprehensive monitoring through:
+- Real-time metrics dashboard
+- Historical performance data
+- Alert configuration for anomaly detection
+
+Access the monitoring dashboard at: `http://localhost:8080/metrics`
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support and questions:
+- Create an issue in the GitHub repository
+- Contact the development team at: Arcturus@example.com
+
+## Acknowledgments
+
+This system incorporates advanced research in network optimization and machine learning algorithms for distributed systems.
