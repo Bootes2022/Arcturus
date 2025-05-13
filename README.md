@@ -49,7 +49,7 @@ Arcturus revolutionizes **Global Acceleration (GA)** by dynamically orchestratin
 | **Average**           | —          | **150.3**            | **100.5**            | **31.2%**   |
 
 ## 🏗️ Architecture 
-![Scheduling Architecture](scheduling/assets/process.svg)
+![Scheduling Architecture](scheduling/assets/Arcturus.svg)
 
 ## 🚀 Quick Start Guide
 
