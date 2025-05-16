@@ -25,7 +25,7 @@ On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud in
 |---------------------------|-------------------------------------------------------------------------------|
 | **Multi-Cloud Adaptive**  | Leverages heterogeneous resources (AWS, Vultr, etc.) to cut system costs by over 70% |
 | **High Performance**  | 1.7× faster acceleration​​ via streaming multiplexing, packet merging, and CMAB tuning |
-| **​​Stability Under Load​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
+| **​​Hybrid Scheduling​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
 
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
