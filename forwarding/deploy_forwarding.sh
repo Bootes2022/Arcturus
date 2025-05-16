@@ -8,7 +8,7 @@ REPO_OWNER="Bootes2022"
 REPO_NAME="Arcturus"
 BRANCH="main"  # Default branch, can be changed as needed
 ARCHIVE_FORMAT="tar.gz"  # Options: "zip" or "tar.gz"
-ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}.${ARCHIVE_FORMAT}"
+ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/${BRANCH}.${ARCHIVE_FORMAT}"
 
 DEPLOY_DIR="/opt/forwarding"
 FORWARDING_DIR="$DEPLOY_DIR/forwarding"
@@ -71,6 +71,102 @@ install_go() {
         source ~/.profile
         echo "GOPATH configured: $GOPATH"
     fi
+}
+
+# Install etcd
+install_etcd() {
+    echo "Installing etcd..."
+    
+    # Check if etcd is already installed
+    if command -v etcd >/dev/null 2>&1; then
+        ETCD_VERSION=$(etcd --version | grep "etcd Version" | awk '{print $3}')
+        echo "etcd is already installed: $ETCD_VERSION"
+        return
+    fi
+    
+    # Determine OS type
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$NAME
+    else
+        OS=$(uname -s)
+    fi
+    
+    echo "Detected OS: $OS"
+    
+    # Set etcd version and installation directories
+    ETCD_VER="v3.5.9"
+    ETCD_DIR="/usr/local/etcd"
+    DOWNLOAD_DIR="/tmp/etcd-download"
+    
+    # Create download directory
+    mkdir -p $DOWNLOAD_DIR
+    
+    if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]] || [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+        echo "Installing etcd on Linux..."
+        
+        # Download etcd
+        DOWNLOAD_URL="https://github.com/etcd-io/etcd/releases/download/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz"
+        wget -q -O $DOWNLOAD_DIR/etcd.tar.gz $DOWNLOAD_URL
+        
+        # Extract etcd
+        sudo mkdir -p $ETCD_DIR
+        sudo tar -xzf $DOWNLOAD_DIR/etcd.tar.gz -C $DOWNLOAD_DIR
+        sudo mv $DOWNLOAD_DIR/etcd-${ETCD_VER}-linux-amd64/etcd* $ETCD_DIR/
+        
+        # Create symbolic links
+        sudo ln -sf $ETCD_DIR/etcd /usr/local/bin/etcd
+        sudo ln -sf $ETCD_DIR/etcdctl /usr/local/bin/etcdctl
+        sudo ln -sf $ETCD_DIR/etcdutl /usr/local/bin/etcdutl
+        
+        # Create etcd data directory
+        sudo mkdir -p /var/lib/etcd
+        
+        # Create systemd service file
+        echo "Creating etcd systemd service..."
+        ETCD_SERVICE_FILE="/etc/systemd/system/etcd.service"
+        
+        sudo tee $ETCD_SERVICE_FILE > /dev/null << EOF
+[Unit]
+Description=etcd distributed key-value store
+Documentation=https://github.com/etcd-io/etcd
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/etcd \\
+  --data-dir=/var/lib/etcd \\
+  --name=default \\
+  --initial-advertise-peer-urls=http://localhost:2380 \\
+  --listen-peer-urls=http://localhost:2380 \\
+  --advertise-client-urls=http://localhost:2379 \\
+  --listen-client-urls=http://localhost:2379 \\
+  --initial-cluster=default=http://localhost:2380
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        
+        # Enable and start etcd service
+        sudo systemctl daemon-reload
+        sudo systemctl enable etcd.service
+        sudo systemctl start etcd.service
+        
+        # Verify etcd is running
+        echo "Checking etcd service status..."
+        sudo systemctl status etcd.service --no-pager
+        
+        echo "etcd installation completed"
+    else
+        echo "Unsupported OS for automatic etcd installation. Please install etcd manually."
+        exit 1
+    fi
+    
+    # Clean up
+    rm -rf $DOWNLOAD_DIR
 }
 
 # Deploy Forwarding service
@@ -194,6 +290,26 @@ deploy_forwarding() {
         exit 1
     fi
     
+    # Create config file to connect to etcd if it doesn't exist
+    if [ ! -f "./config.toml" ]; then
+        echo "Creating default configuration file with etcd settings..."
+        cat > ./config.toml << EOF
+# Server Configuration
+[server]
+port = 8081
+
+# etcd Configuration
+[etcd]
+endpoints = ["localhost:2379"]
+dial_timeout = 5
+request_timeout = 5
+
+# Add other configuration parameters as needed
+EOF
+    else
+        echo "Configuration file already exists. Using existing configuration."
+    fi
+    
     # Create systemd service file
     echo "Setting up systemd service..."
     SERVICE_FILE="/etc/systemd/system/forwarding.service"
@@ -201,7 +317,8 @@ deploy_forwarding() {
     sudo tee $SERVICE_FILE > /dev/null << EOF
 [Unit]
 Description=Forwarding Service
-After=network.target
+After=network.target etcd.service
+Requires=etcd.service
 
 [Service]
 Type=simple
@@ -230,5 +347,6 @@ EOF
 # Main execution flow
 echo "Starting forwarding deployment process..."
 install_go
+install_etcd
 deploy_forwarding
 echo "=== Forwarding deployment completed ==="
