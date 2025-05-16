@@ -45,7 +45,19 @@ Unlike traditional cloud-tied GA solutions, Arcturus achieves **1.7× faster acc
 | **Average**           | —          | **150.3**            | **100.5**            | **31.2%**   |
 
 ## 🏗️ Architecture 
-![Scheduling Architecture](scheduling/assets/Arcturus.svg)
+1. **Controller Nodes**: Master nodes that:
+   - Aggregate global performance data
+   - Make high-level routing decisions
+   - Manage configuration distribution
+   - Coordinate system-wide operations
+
+2. **Proxy Nodes**: Edge nodes that:
+   - Execute local routing decisions
+   - Report performance metrics
+   - Implement forwarding policies
+   - Handle actual traffic processing
+
+![Scheduling Architecture](scheduling/assets/process.svg)
 
 ## 🚀 Quick Start Guide
 
