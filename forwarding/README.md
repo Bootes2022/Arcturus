@@ -74,7 +74,73 @@ LimitNOFILE=40000
 [Install]
 WantedBy=multi-user.target
 ```
+#### BPR config
+```bash
+#!/bin/bash
 
+########################
+# Core Algorithm Control
+########################
+CPU_LOW_THRESHOLD <60>              # CPU low threshold (%), phase differentiation point
+CPU_TARGET_THRESHOLD <20>           # Target CPU threshold (%), queue backlog target
+V_WEIGHT <0.001>                    # Latency weighting factor (0.001-0.1 range)
+MAX_BPR_ITERATIONS <3>              # BPR max iterations (3-5 recommended)
+
+########################
+# Dynamic Distribution
+########################
+REDISTRIB_PROPORTION <0.3-0.7>      # Request redistribution proportion
+NON_MAIN_CLUSTER_BOOST <1.0-1.5>    # Non-main cluster score multiplier
+GAP_SCORE_BOOST <1.0-2.0>           # Data gap enhancement factor
+
+########################
+# Monitoring Thresholds
+########################
+CPU_ALERT_THRESHOLDS <60,70,80>     # CPU alert thresholds (comma-separated)
+MIN_VARIANCE <0.1>                  # Minimum CPU variance threshold
+MAX_LATENCY <500>                   # Maximum latency threshold (ms)
+```
+#### KNN config
+```bash
+#!/bin/bash
+
+########################
+# Anomaly Detection Core
+########################
+SIGNIFICANT_GAP_MULTIPLIER <2.5>     # Gap detection sensitivity (higher reduces detection)
+GAP_MAD_FLOOR <0.0001>               # Minimum gap median absolute deviation
+STD_DEV_FACTOR <2.0>                 # Standard deviation threshold multiplier
+IQR_COEFFICIENT <1.5>                # IQR range coefficient (1.5 default)
+
+########################
+# Large Value Handling
+########################
+LARGE_VALUE_ADJUSTMENT <1.7>         # Large value std dev adjustment
+ABSOLUTE_LARGE_THRESHOLD <100>       # Absolute large value threshold
+LARGE_RELATIVE_RATIO <1.8>           # Mean relative ratio threshold
+
+########################
+# Score Calculation
+########################
+SMALL_DEVIATION_EXP <1.2>            # Small anomaly exponent (>1 amplifies)
+LARGE_DEVIATION_EXP <1.3>            # Large anomaly exponent (>1 amplifies)
+GAP_SCORE_BOOST <1.3>                # Neighboring gap score boost
+RANGE_OUTLIER_BOOST <1.8>            # Out-of-cluster range boost
+
+########################
+# Cluster Identification
+########################
+CLUSTER_SIZE_WEIGHT <0.6>            # Cluster size weight (0-1 range)
+CLUSTER_POSITION_WEIGHT <0.25>       # Central position weight (0-1)
+CLUSTER_DENSITY_WEIGHT <0.15>        # Density score weight (0-1)
+NON_MAIN_CLUSTER_BOOST <1.2>         # Non-main cluster multiplier
+
+########################
+# General Configuration
+########################
+MINIMUM_SCORE <1.0>                  # Base score for all anomalies
+SENSITIVITY <1.0>                    # Global sensitivity multiplier (>1: sensitive)
+```
 
 ### Running the System
 
