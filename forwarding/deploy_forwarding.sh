@@ -4,7 +4,12 @@ set -e
 echo "=== Starting Forwarding Project Deployment ==="
 
 # Repository information
-REPO_URL="https://github.com/Bootes2022/Arcturus.git"
+REPO_OWNER="Bootes2022"
+REPO_NAME="Arcturus"
+BRANCH="main"  # Default branch, can be changed as needed
+ARCHIVE_FORMAT="tar.gz"  # Options: "zip" or "tar.gz"
+ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}.${ARCHIVE_FORMAT}"
+
 DEPLOY_DIR="/opt/forwarding"
 FORWARDING_DIR="$DEPLOY_DIR/forwarding"
 
@@ -78,20 +83,106 @@ deploy_forwarding() {
         sudo chown $(whoami) $DEPLOY_DIR
     fi
     
-    # Clone or update the repository
+    # Check if old version exists and remove it
     if [ -d "$FORWARDING_DIR" ]; then
-        echo "Updating existing repository..."
-        cd $FORWARDING_DIR
-        git pull
-    else
-        echo "Cloning repository..."
-        git clone $REPO_URL $DEPLOY_DIR
-        if [ ! -d "$FORWARDING_DIR" ]; then
-            echo "Error: Forwarding directory not found in the repository"
+        echo "Deployment directory already exists, removing old version..."
+        sudo rm -rf $FORWARDING_DIR
+    fi
+    
+    echo "Downloading project archive from ${ARCHIVE_URL}..."
+    ARCHIVE_FILE="/tmp/${REPO_NAME}-${BRANCH}.${ARCHIVE_FORMAT}"
+    
+    # Install wget if not already installed
+    if ! command -v wget >/dev/null 2>&1; then
+        if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            OS=$NAME
+        else
+            OS=$(uname -s)
+        fi
+        
+        if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
+            sudo apt-get update
+            sudo apt-get install -y wget
+        elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+            sudo yum install -y wget
+        else
+            echo "Please install wget manually"
             exit 1
         fi
-        cd $FORWARDING_DIR
     fi
+    
+    # Download the archive
+    wget -O $ARCHIVE_FILE $ARCHIVE_URL
+    
+    if [ ! -f "$ARCHIVE_FILE" ]; then
+        echo "Failed to download archive. Please check the URL and try again."
+        exit 1
+    fi
+    
+    echo "Extracting archive..."
+    # Ensure deployment directory exists
+    mkdir -p $DEPLOY_DIR
+    
+    # Extract based on archive format
+    if [[ "$ARCHIVE_FORMAT" == "zip" ]]; then
+        if ! command -v unzip >/dev/null 2>&1; then
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                OS=$NAME
+            else
+                OS=$(uname -s)
+            fi
+            
+            if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
+                sudo apt-get update
+                sudo apt-get install -y unzip
+            elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+                sudo yum install -y unzip
+            else
+                echo "Please install unzip manually"
+                exit 1
+            fi
+        fi
+        unzip -q $ARCHIVE_FILE -d $DEPLOY_DIR
+    elif [[ "$ARCHIVE_FORMAT" == "tar.gz" ]]; then
+        tar -xzf $ARCHIVE_FILE -C $DEPLOY_DIR
+    else
+        echo "Unsupported archive format: $ARCHIVE_FORMAT"
+        exit 1
+    fi
+    
+    # Extracted folder name is typically "repo-branch"
+    EXTRACTED_DIR="$DEPLOY_DIR/${REPO_NAME}-${BRANCH}"
+    
+    if [ ! -d "$EXTRACTED_DIR" ]; then
+        echo "Failed to extract the archive. The expected directory does not exist."
+        exit 1
+    fi
+    
+    # Check the extracted directory structure to find the forwarding directory
+    if [ -d "$EXTRACTED_DIR/forwarding" ]; then
+        echo "Found forwarding directory in extracted archive"
+        sudo mv "$EXTRACTED_DIR/forwarding" "$FORWARDING_DIR"
+    else
+        echo "Forwarding directory not found in expected location. "
+        echo "The extracted repository contains the following structure:"
+        ls -la "$EXTRACTED_DIR"
+        
+        # Assume the extracted directory is the project root
+        sudo mv "$EXTRACTED_DIR" "$FORWARDING_DIR"
+    fi
+    
+    # Clean up the downloaded archive file
+    rm $ARCHIVE_FILE
+    
+    # Exit with error if the forwarding directory doesn't exist or is empty
+    if [ ! -d "$FORWARDING_DIR" ] || [ -z "$(ls -A $FORWARDING_DIR)" ]; then
+        echo "Error: Forwarding directory not found or empty after extraction"
+        exit 1
+    fi
+    
+    cd $FORWARDING_DIR
     
     echo "Building forwarding service..."
     # Fetch dependencies and build
@@ -136,7 +227,7 @@ EOF
     sudo systemctl status forwarding.service --no-pager
 }
 
-# Main execution
+# Main execution flow
 echo "Starting forwarding deployment process..."
 install_go
 deploy_forwarding
