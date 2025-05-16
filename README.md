@@ -13,13 +13,6 @@ Unlike traditional cloud-tied GA solutions, Arcturus achieves **1.7× faster acc
 On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud infrastructure and the dynamic behavior of acceleration workloads*, and based on these insights, *designs specialized scheduling strategies*. It combines **last-mile scheduling based on Lyapunov optimization** with **mid-mile scheduling formulated as a constrained maximum flow problem**, jointly optimizing acceleration performance and system stability to achieve **Pareto-optimal efficiency** across diverse network conditions.
 
 
-
-**Aim to**:  
-- Real-time interactive applications  
-- Cost-sensitive large-scale deployments  
-- Multi-cloud or hybrid-cloud environments  
-
-
 ## ✨ Key Features  
 | **Feature**               | **Advantage**                                                                 |
 |---------------------------|-------------------------------------------------------------------------------|
