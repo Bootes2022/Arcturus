@@ -4,14 +4,19 @@ set -e
 echo "=== Starting Scheduling Project Deployment ==="
 
 # Repository information
-REPO_URL="https://github.com/Bootes2022/Arcturus.git"
+REPO_OWNER="Bootes2022"
+REPO_NAME="Arcturus"
+BRANCH="main" 
+ARCHIVE_FORMAT="tar.gz"  #  "zip" or "tar.gz"
+ARCHIVE_URL="https://github.com/${REPO_OWNER}/${REPO_NAME}/archive/refs/heads/${BRANCH}.${ARCHIVE_FORMAT}"
+
 DEPLOY_DIR="/opt/scheduling"
 SCHEDULING_DIR="$DEPLOY_DIR/scheduling"
 
 # Database configuration
 DB_NAME="scheduling"
 DB_USER="scheduling_user"
-DB_PASSWORD="StrongPassword123!"  # Change this in production
+DB_PASSWORD="Password" 
 
 # Install Go environment
 install_go() {
@@ -145,23 +150,99 @@ deploy_scheduling() {
         sudo chown $(whoami) $DEPLOY_DIR
     fi
     
-    # Clone or update the repository
     if [ -d "$SCHEDULING_DIR" ]; then
-        echo "Updating existing repository..."
-        cd $SCHEDULING_DIR
-        git pull
-    else
-        echo "Cloning repository..."
-        git clone $REPO_URL $DEPLOY_DIR
-        if [ ! -d "$SCHEDULING_DIR" ]; then
-            echo "Error: Scheduling directory not found in the repository"
-            exit 1
-        fi
-        cd $SCHEDULING_DIR
+        echo "Deployment directory already exists, removing old version..."
+        sudo rm -rf $SCHEDULING_DIR
     fi
     
+    echo "Downloading project archive from ${ARCHIVE_URL}..."
+    ARCHIVE_FILE="/tmp/${REPO_NAME}-${BRANCH}.${ARCHIVE_FORMAT}"
+    
+    if ! command -v wget >/dev/null 2>&1; then
+        if [ -f /etc/os-release ]; then
+            . /etc/os-release
+            OS=$NAME
+        else
+            OS=$(uname -s)
+        fi
+        
+        if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
+            sudo apt-get update
+            sudo apt-get install -y wget
+        elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+            sudo yum install -y wget
+        else
+            echo "Please install wget manually"
+            exit 1
+        fi
+    fi
+    
+    wget -O $ARCHIVE_FILE $ARCHIVE_URL
+    
+    if [ ! -f "$ARCHIVE_FILE" ]; then
+        echo "Failed to download archive. Please check the URL and try again."
+        exit 1
+    fi
+    
+    echo "Extracting archive..."
+    mkdir -p $DEPLOY_DIR
+    
+    if [[ "$ARCHIVE_FORMAT" == "zip" ]]; then
+        if ! command -v unzip >/dev/null 2>&1; then
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                OS=$NAME
+            else
+                OS=$(uname -s)
+            fi
+            
+            if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
+                sudo apt-get update
+                sudo apt-get install -y unzip
+            elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+                sudo yum install -y unzip
+            else
+                echo "Please install unzip manually"
+                exit 1
+            fi
+        fi
+        unzip -q $ARCHIVE_FILE -d $DEPLOY_DIR
+    elif [[ "$ARCHIVE_FORMAT" == "tar.gz" ]]; then
+        tar -xzf $ARCHIVE_FILE -C $DEPLOY_DIR
+    else
+        echo "Unsupported archive format: $ARCHIVE_FORMAT"
+        exit 1
+    fi
+    
+    EXTRACTED_DIR="$DEPLOY_DIR/${REPO_NAME}-${BRANCH}"
+    
+    if [ ! -d "$EXTRACTED_DIR" ]; then
+        echo "Failed to extract the archive. The expected directory does not exist."
+        exit 1
+    fi
+    
+    if [ -d "$EXTRACTED_DIR/scheduling" ]; then
+        echo "Found scheduling directory in extracted archive"
+        sudo mv "$EXTRACTED_DIR/scheduling" "$SCHEDULING_DIR"
+    else
+        echo "Scheduling directory not found in expected location. "
+        echo "The extracted repository contains the following structure:"
+        ls -la "$EXTRACTED_DIR"
+    
+        sudo mv "$EXTRACTED_DIR" "$SCHEDULING_DIR"
+    fi
+    
+    rm $ARCHIVE_FILE
+    
+    if [ ! -d "$SCHEDULING_DIR" ] || [ -z "$(ls -A $SCHEDULING_DIR)" ]; then
+        echo "Error: Scheduling directory not found or empty after extraction"
+        exit 1
+    fi
+    
+    cd $SCHEDULING_DIR
+    
     echo "Building scheduling service..."
-    # Fetch dependencies and build
+    
     go mod tidy
     go build -o scheduling_service .
     
@@ -170,7 +251,6 @@ deploy_scheduling() {
         exit 1
     fi
     
-    # Create config file if it doesn't exist
     if [ ! -f "./config.toml" ]; then
         echo "Creating default configuration file..."
         cat > ./config.toml << EOF
@@ -188,7 +268,6 @@ EOF
         echo "Configuration file already exists. Using existing configuration."
     fi
     
-    # Initialize database schema if needed
     echo "Checking for database schema initialization..."
     if [ -f "./db/schema.sql" ]; then
         echo "Initializing database schema..."
@@ -197,7 +276,6 @@ EOF
         echo "No schema.sql found. Database initialization will be handled by the application if needed."
     fi
     
-    # Create systemd service file
     echo "Setting up systemd service..."
     SERVICE_FILE="/etc/systemd/system/scheduling.service"
     
@@ -220,17 +298,16 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
     
-    # Enable and start the service
+    # run
     sudo systemctl daemon-reload
     sudo systemctl enable scheduling.service
     sudo systemctl restart scheduling.service
     
-    # Check service status
+    # check
     echo "Service deployment completed. Current status:"
     sudo systemctl status scheduling.service --no-pager
 }
 
-# Main execution
 echo "Starting scheduling deployment process..."
 install_go
 install_mysql

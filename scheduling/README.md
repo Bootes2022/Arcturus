@@ -1,22 +1,6 @@
-# Arcturus Scheduling Plane
+# Scheduling
 
 The Arcturus Scheduling Plane serves as the **central configuration and coordination hub** for the entire acceleration system. It is the critical component that must be initialized first during system startup, as it manages global system configuration, node registration, and orchestrates the entire distributed acceleration infrastructure.
-
-## Table of Contents
-- [Overview](#overview)
-- [Scheduling Architecture](#scheduling-architecture)
-- [Key Components](#key-components)
-  - [Controller and Proxy Nodes](#controller-and-proxy-nodes)
-  - [Data Synchronization](#data-synchronization)
-  - [Regional Scheduling Groups](#regional-scheduling-groups)
-- [Database Schema](#database-schema)
-  - [Node Region Table](#node-region-table)
-  - [System Info Table](#system-info-table)
-  - [Region Probe Info Table](#region-probe-info-table)
-  - [Network Metrics Table](#network-metrics-table)
-  - [Domain Origin Table](#domain-origin-table)
-- [Installation](#installation)
-- [License](#license)
 
 ## Overview
 
@@ -29,66 +13,6 @@ The **Scheduling Plane** is the brain of the Arcturus acceleration system. As th
 - **Maintains the global view** of network topology and health status
 
 Without the Scheduling Plane running, no other component of the acceleration system can function properly. It provides the foundation upon which all distributed operations are built.
-
-## Scheduling Architecture
-
-The scheduling architecture implements a hierarchical design with specialized roles:
-
-### Core Components
-
-1. **Controller Nodes**: Master nodes that:
-   - Aggregate global performance data
-   - Make high-level routing decisions
-   - Manage configuration distribution
-   - Coordinate system-wide operations
-
-2. **Proxy Nodes**: Edge nodes that:
-   - Execute local routing decisions
-   - Report performance metrics
-   - Implement forwarding policies
-   - Handle actual traffic processing
-
-![Scheduling Architecture](assets/process.svg)
-
-### Key Functions
-
-1. **Configuration Management**: Distributes and synchronizes system configurations across all nodes
-2. **Node Registration**: Manages node discovery and health monitoring
-3. **Path Optimization**: Calculates optimal routes based on real-time network conditions
-4. **Performance Monitoring**: Continuously collects and analyzes system metrics
-5. **Fault Tolerance**: Detects failures and triggers automatic failover mechanisms
-
-## Key Components
-
-### Controller and Proxy Nodes
-
-The scheduling system operates on a distributed model where:
-
-- **Controller nodes** maintain the global state and make strategic decisions
-- **Proxy nodes** handle tactical execution and report local conditions
-- Both node types share scheduling logic but differ in scope and authority
-- Data synchronization occurs every **5 seconds** to balance responsiveness with stability
-
-### Data Synchronization
-
-The system synchronizes two types of data:
-
-1. **Static Data**: Network topology, user configurations, and routing policies
-2. **Dynamic Data**: Real-time metrics including CPU usage, latency, and bandwidth
-
-To ensure efficient data propagation:
-- Static data uses incremental updates
-- Dynamic data employs compression and aggregation
-- Critical changes trigger immediate synchronization
-
-### Regional Scheduling Groups
-
-Nodes are organized into regional groups for optimal performance:
-
-- Each group elects a **master node** for local coordination
-- Groups handle regional traffic patterns independently
-- Inter-group communication enables global optimization
-- This hierarchy reduces latency and improves scalability
 
 ## Database Schema
 
@@ -240,65 +164,121 @@ VALUES
 
 | Requirement       | Version  | Verification Command       |
 |-------------------|----------|----------------------------|
-| Kubernetes        | ≥1.23    | `kubectl version --short`  |
-| Terraform         | ≥1.4     | `terraform --version`      |
-| Helm              | ≥3.11    | `helm version --short`     |
-| MySQL/MariaDB     | ≥8.0     | `mysql --version`          |
+| go                | ≥1.23    | `go version `  |
+| MySQL    | ≥8.0     | `mysql --version`          |
 
-### Database Setup
+## Deployment Process Overview
 
-1. Create the database:
-```bash
-mysql -u root -p
-CREATE DATABASE arcturus_scheduling;
-USE arcturus_scheduling;
-```
+1. Download GitHub repository archive
+2. Extract the files
+3. Execute the deployment script
 
-2. Initialize all tables using the schemas provided above.
+## Detailed Steps
 
-3. Populate initial node data:
-```bash
-mysql arcturus_scheduling < init_nodes.sql
-```
+### 1. Download GitHub Repository Archive
 
-### Installation via Helm
+First, we need to download the project archive from GitHub. You can download it directly on your server using the following commands:
 
 ```bash
-# Add Arcturus repository
-helm repo add arcturus https://charts.arcturus.io/stable
+# Create a temporary directory for download
+mkdir -p /tmp/deployment
 
-# Install with production configuration
-helm install arcturus-scheduling arcturus/scheduling \
-  --namespace arcturus-system \
-  --create-namespace \
-  --values https://raw.githubusercontent.com/your-repo/arcturus/main/config/scheduling-prod.yaml
+# Navigate to the temporary directory
+cd /tmp/deployment
+
+# Download GitHub repository archive (replace with your repository information)
+wget https://github.com/Bootes2022/Arcturus/scheduling.tar.gz -O scheduling.tar.gz
 ```
 
-### Verification
+> Note: You need to replace `Bootes2022/Arcturus` with your actual repository path, and `main` with your desired branch name.
 
-Check that all components are running:
+### 2. Extract the Files
+
+Next, extract the downloaded archive:
+
 ```bash
-kubectl get pods -n arcturus-system
-kubectl get svc -n arcturus-system
+# Extract tar.gz format archive
+tar -xzf scheduling.tar.gz
+
+# If you downloaded a zip format, use:
+# apt-get install unzip -y  # If unzip is not installed on your system
+# unzip arcturus.zip
 ```
 
-Verify database connectivity:
+### 3. Execute the Deployment Script
+
+After extraction, navigate to the project directory and execute the deployment script:
+
 ```bash
-kubectl exec -it scheduling-controller-0 -n arcturus-system -- mysql -h mysql-service -u root -p arcturus_scheduling -e "SELECT COUNT(*) FROM node_region;"
+# Navigate to the extracted directory (directory name may include branch name)
+cd scheduling
+
+# Ensure the deployment script has execution permissions
+chmod +x deploy_scheduling.sh
+
+# Execute the deployment script
+./deploy_scheduling.sh
 ```
 
-## Configuration
+## Deployment Script Functions
 
-The Scheduling Plane configuration is managed through:
+The deployment script (`deploy.sh`) will automatically complete the following tasks:
 
-1. **Environment Variables**: For runtime parameters
-2. **ConfigMaps**: For static configuration
-3. **Database**: For dynamic configuration
+1. Install Go environment (if not already installed)
+2. Install MySQL database (if not already installed)
+3. Create necessary database and user
+4. Build the application
+5. Create configuration file
+6. Set up and start the system service
 
-Key configuration files:
-- `scheduling-config.yaml`: Core scheduling parameters
-- `node-discovery.yaml`: Node registration settings
-- `routing-policy.yaml`: Path selection policies
+## Post-Deployment Verification
+
+After deployment is complete, you can check the service status with the following command:
+
+```bash
+sudo systemctl status scheduling.service
+```
+
+The application will run on port 8080. You can check if it's listening properly with:
+
+```bash
+netstat -tulpn | grep 8080
+```
+
+## Custom Settings
+
+If you need to customize the deployment, you can modify the following parameters in the `deploy_scheduling.sh` file before executing the script:
+
+* `DEPLOY_DIR`: Deployment directory (default: /opt/scheduling)
+* `DB_NAME`: Database name (default: scheduling)
+* `DB_USER`: Database username (default: scheduling_user)
+* `DB_PASSWORD`: Database password (default: StrongPassword123!)
+
+For example:
+
+```bash
+# Change database password (recommended for production environments)
+sed -i 's/StrongPassword123!/YourSecurePassword456!/' deploy_scheduling.sh
+
+# Modify deployment directory
+sed -i 's|/opt/scheduling|/var/www/myapp|g' deploy_scheduling.sh
+```
+
+## Common Troubleshooting
+
+1. **Deployment script permission issues**:
+
+```bash
+chmod +x deploy_scheduling.sh
+```
+
+2. **Port in use**: If port 8080 is already in use, modify the port configuration in `config.toml`.
+
+3. **Service fails to start**: View logs for detailed error information:
+
+```bash
+sudo journalctl -u scheduling.service -n 50
+```
 
 ## License
 

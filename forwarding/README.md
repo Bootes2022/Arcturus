@@ -1,93 +1,10 @@
-# Forwarding System
+# Forwarding
 
 A distributed multi-node forwarding system designed for high-performance network traffic routing and optimization. The system leverages advanced techniques including TCP connection pooling, stream multiplexing, packet merging, and segment routing to achieve optimal throughput while maintaining low latency.
 
 ## Overview
 
 The Forwarding System is a distributed architecture where multiple nodes work collaboratively to forward network traffic efficiently. Each node in the system deploys forwarding functionality and participates in a coordinated network that ensures optimal data transmission across different geographical locations.
-
-## Architecture
-
-The system consists of multiple forwarding nodes that communicate and coordinate through:
-- Centralized configuration management via etcd
-- Intelligent routing decisions based on real-time network conditions
-- Dynamic parameter optimization using machine learning algorithms
-
-## Key Features
-
-### 1. Etcd Cluster Information Synchronization
-
-The system uses etcd as a distributed key-value store for:
-- Centralized configuration management
-- Node discovery and health monitoring
-- Real-time synchronization of cluster state
-- Consistent routing table distribution
-
-### 2. Inter-node Monitoring and Reporting
-
-Our monitoring subsystem provides comprehensive visibility into system performance:
-
-- **Node-to-node Probe Collection**: Continuous monitoring of network conditions between all node pairs
-- **Self-node Information Reporting**: Each node reports its own health metrics and resource utilization
-- **KNN Compression for Probe Data**: Efficient data compression using K-Nearest Neighbors algorithm to reduce bandwidth overhead while maintaining accuracy
-
-### 3. Advanced Data Forwarding
-
-The forwarding functionality integrates three core optimization techniques:
-
-#### TCP Connection Management
-- **Connection Pooling**: Reuses existing TCP connections to reduce handshake overhead
-- **Stream Multiplexing**: Multiple data streams share single TCP connections
-- **Packet Merging**: Combines multiple small packets into larger ones for efficiency
-
-#### Dynamic Parameter Optimization
-
-The system employs the LinUCB algorithm for real-time parameter tuning:
-
-**Key Parameters:**
-- **Sp (Sessions)**: Number of multiplexing sessions [1-10]
-- **Cp (Concurrency)**: Concurrency levels [50-200] in steps of 10
-- **Tp (Timeout)**: Packet merge timeout [1-5ms]
-
-**Contextual Features:**
-- CPU utilization
-- Requests per second (RPS)
-- Requests processed per unit time (RQPT)
-- Average request processing time (ART)
-
-#### Segment Routing
-
-The system implements TCP-based segment routing with a custom protocol header:
-
-```
-+-------------+--------+----------+------------+
-| packet_id   | offset | hop_list | hop_counts |
-+-------------+--------+----------+------------+
-```
-
-**Header Fields:**
-- **packet_id**: Unique identifier for sub-requests within merged requests
-- **offset**: Relative position of each sub-request for accurate reconstruction
-- **hop_list**: List of intermediate nodes in the routing path
-- **hop_counts**: Number of hops for routing control
-
-This standardized header structure enables efficient parsing and forwarding while minimizing computational overhead on proxy nodes.
-
-## System Benefits
-
-1. **Reduced Connection Overhead**: Through connection pooling and multiplexing
-2. **Enhanced Throughput**: Via intelligent packet merging and optimization
-3. **Controlled Latency**: Dynamic parameter tuning keeps latency within acceptable bounds
-4. **Scalability**: Distributed architecture supports horizontal scaling
-5. **Reliability**: Real-time monitoring and adaptive routing ensure high availability
-
-## Performance Optimization
-
-The system maintains optimal performance through:
-- Continuous monitoring of performance metrics
-- Machine learning-based parameter adaptation
-- Automatic traffic flow adjustment based on Lyapunov drift calculations
-- Real-time response to changing network conditions
 
 ## Getting Started
 
@@ -105,20 +22,125 @@ git clone https://github.com/Bootes2022/Arcturus/tree/main/forwarding
 
 # Install dependencies
 cd forwarding
-./install.sh
-
-# Configure etcd endpoints
-cp config.example.yaml config.yaml
-vim config.yaml
+./deploy_forwarding.sh
 ```
 
 ### Configuration
+#### etcd config
+```bash
 
-Edit `config.yaml` to set:
-- etcd cluster endpoints
-- Node identification
-- Initial parameter values
-- Monitoring intervals
+# Member configuration
+# Node 1 (192.168.0.1) - /etc/etcd/etcd.conf:
+ETCD_NAME="etcd1"
+ETCD_DATA_DIR="/var/lib/etcd"
+ETCD_LISTEN_PEER_URLS="http://0.0.0.0:2380"        # Listen for peer communication
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"      # Listen for client connections
+
+# Cluster configuration
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.0.1:2380"  # External peer URL
+ETCD_ADVERTISE_CLIENT_URLS="http://192.168.0.1:2379"        # External client URL
+ETCD_INITIAL_CLUSTER="etcd1=http://192.168.0.1:2380,etcd2=http://192.168.0.2:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_INITIAL_CLUSTER_STATE="new"
+
+# Member configuration
+# Node 2 (192.168.0.2) - /etc/etcd/etcd.conf:
+ETCD_NAME="etcd2"
+ETCD_DATA_DIR="/var/lib/etcd"
+ETCD_LISTEN_PEER_URLS="http://0.0.0.0:2380"
+ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+
+# Cluster configuration
+ETCD_INITIAL_ADVERTISE_PEER_URLS="http://192.168.0.2:2380"
+ETCD_ADVERTISE_CLIENT_URLS="http://192.168.0.2:2379"
+ETCD_INITIAL_CLUSTER="etcd1=http://192.168.0.1:2380,etcd2=http://192.168.0.2:2380"
+ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
+ETCD_INITIAL_CLUSTER_STATE="new"
+
+# Systemd Service (Both nodes) - /etc/systemd/system/etcd.service:​
+[Unit]
+Description=etcd distributed key-value store
+Documentation=https://github.com/etcd-io/etcd
+After=network.target
+
+[Service]
+Type=notify
+EnvironmentFile=/etc/etcd/etcd.conf
+ExecStart=/usr/local/bin/etcd
+Restart=always
+RestartSec=10s
+LimitNOFILE=40000
+
+[Install]
+WantedBy=multi-user.target
+```
+#### BPR config
+```bash
+#!/bin/bash
+
+########################
+# Core Algorithm Control
+########################
+CPU_LOW_THRESHOLD <60>              # CPU low threshold (%), phase differentiation point
+CPU_TARGET_THRESHOLD <20>           # Target CPU threshold (%), queue backlog target
+V_WEIGHT <0.001>                    # Latency weighting factor (0.001-0.1 range)
+MAX_BPR_ITERATIONS <3>              # BPR max iterations (3-5 recommended)
+
+########################
+# Dynamic Distribution
+########################
+REDISTRIB_PROPORTION <0.3-0.7>      # Request redistribution proportion
+NON_MAIN_CLUSTER_BOOST <1.0-1.5>    # Non-main cluster score multiplier
+GAP_SCORE_BOOST <1.0-2.0>           # Data gap enhancement factor
+
+########################
+# Monitoring Thresholds
+########################
+CPU_ALERT_THRESHOLDS <60,70,80>     # CPU alert thresholds (comma-separated)
+MIN_VARIANCE <0.1>                  # Minimum CPU variance threshold
+MAX_LATENCY <500>                   # Maximum latency threshold (ms)
+```
+#### KNN config
+```bash
+#!/bin/bash
+
+########################
+# Anomaly Detection Core
+########################
+SIGNIFICANT_GAP_MULTIPLIER <2.5>     # Gap detection sensitivity (higher reduces detection)
+GAP_MAD_FLOOR <0.0001>               # Minimum gap median absolute deviation
+STD_DEV_FACTOR <2.0>                 # Standard deviation threshold multiplier
+IQR_COEFFICIENT <1.5>                # IQR range coefficient (1.5 default)
+
+########################
+# Large Value Handling
+########################
+LARGE_VALUE_ADJUSTMENT <1.7>         # Large value std dev adjustment
+ABSOLUTE_LARGE_THRESHOLD <100>       # Absolute large value threshold
+LARGE_RELATIVE_RATIO <1.8>           # Mean relative ratio threshold
+
+########################
+# Score Calculation
+########################
+SMALL_DEVIATION_EXP <1.2>            # Small anomaly exponent (>1 amplifies)
+LARGE_DEVIATION_EXP <1.3>            # Large anomaly exponent (>1 amplifies)
+GAP_SCORE_BOOST <1.3>                # Neighboring gap score boost
+RANGE_OUTLIER_BOOST <1.8>            # Out-of-cluster range boost
+
+########################
+# Cluster Identification
+########################
+CLUSTER_SIZE_WEIGHT <0.6>            # Cluster size weight (0-1 range)
+CLUSTER_POSITION_WEIGHT <0.25>       # Central position weight (0-1)
+CLUSTER_DENSITY_WEIGHT <0.15>        # Density score weight (0-1)
+NON_MAIN_CLUSTER_BOOST <1.2>         # Non-main cluster multiplier
+
+########################
+# General Configuration
+########################
+MINIMUM_SCORE <1.0>                  # Base score for all anomalies
+SENSITIVITY <1.0>                    # Global sensitivity multiplier (>1: sensitive)
+```
 
 ### Running the System
 
