@@ -60,12 +60,9 @@ Unlike traditional cloud-tied GA solutions, Arcturus achieves **1.7× faster acc
 ![Scheduling Architecture](scheduling/assets/process.svg)
 
 ## 🚀 Quick Start Guide
-
-
-![Scheduling Architecture](scheduling/README.md)
-
-
-![Scheduling Architecture](forwarding/README.md)
+For Quick Start , refer to:  
+• [Scheduling ](./scheduling/README.md) - run scheduling plane                      
+• [Forwarding ](./forwarding/README.md) - run forwarding plane
 
 ## License Agreement
 
