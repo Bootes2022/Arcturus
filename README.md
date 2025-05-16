@@ -14,7 +14,6 @@ On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud in
 
 
 
-
 **Aim to**:  
 - Real-time interactive applications  
 - Cost-sensitive large-scale deployments  
@@ -24,10 +23,9 @@ On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud in
 ## ✨ Key Features  
 | **Feature**               | **Advantage**                                                                 |
 |---------------------------|-------------------------------------------------------------------------------|
-| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources across providers (AWS, GCP, etc.)    |
-| **Two-Plane Architecture**| Forwarding plane (adaptive proxies) + Scheduling plane (lightweight optimization) |
-| **High Performance**  | 1.7× faster acceleration​​ via streaming multiplexing, CMAB tuning, and segment routing |
-| **​​Stability Under Load​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy algorithm for path diversity (mid-mile) |
+| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources (AWS, Vultr, etc.) to cut system costs by over 70% |
+| **High Performance**  | 1.7× faster acceleration​​ via streaming multiplexing, packet merging, and CMAB tuning |
+| **​​Stability Under Load​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
 
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
