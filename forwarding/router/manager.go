@@ -2,6 +2,7 @@ package router
 
 import (
 	"data/metrics_processing/collector"
+	"data/metrics_processing/storage"
 	"data/scheduling_algorithms/k_shortest"
 	"log"
 	"sync"
@@ -25,18 +26,93 @@ var (
 	once     sync.Once
 )
 
+// fileManagerInstance是当前应用使用的FileManager实例
+var (
+	fileManagerInstance *storage.FileManager
+	fileManagerOnce     sync.Once
+)
+
+// getFileManager 获取FileManager的单例实例
+func getFileManager() *storage.FileManager {
+	fileManagerOnce.Do(func() {
+		var err error
+		fileManagerInstance, err = storage.NewFileManager("./config")
+		if err != nil {
+			log.Printf("无法创建FileManager: %v", err)
+			return
+		}
+	})
+	return fileManagerInstance
+}
+
+// GetTargetIPByDomain 从域名映射中查找对应的目标IP
+func GetTargetIPByDomain(domain string) string {
+	// 获取FileManager实例
+	fileManager := getFileManager()
+	if fileManager == nil {
+		log.Printf("无法获取FileManager实例")
+		return ""
+	}
+
+	// 获取所有域名映射
+	mappings := fileManager.GetDomainIPMappings()
+	if mappings == nil {
+		log.Printf("域名映射为空")
+		return ""
+	}
+
+	// 查找匹配的域名
+	for _, mapping := range mappings {
+		if mapping.Domain == domain {
+			log.Printf("找到域名 %s 的映射IP: %s", domain, mapping.Ip)
+			return mapping.Ip
+		}
+	}
+
+	// 未找到映射时返回空字符串
+	log.Printf("未找到域名 %s 的映射", domain)
+	return ""
+}
+
+// GetDefaultTargetIP 获取默认目标IP
+// 返回域名映射中的第一条记录的IP
+// 如果没有映射记录，则返回空字符串
+func GetDefaultTargetIP() string {
+	// 获取FileManager实例
+	fileManager := getFileManager()
+	if fileManager == nil {
+		log.Printf("无法获取FileManager实例")
+		return ""
+	}
+
+	// 获取所有域名映射
+	mappings := fileManager.GetDomainIPMappings()
+
+	// 如果有映射记录，返回第一条记录的IP
+	if mappings != nil && len(mappings) > 0 {
+		defaultIP := mappings[0].Ip
+		log.Printf("使用第一个域名映射的IP: %s 作为默认目标", defaultIP)
+		return defaultIP
+	}
+
+	// 没有映射记录时返回空字符串
+	log.Printf("域名映射为空，无默认目标IP")
+	return ""
+}
+
 func GetInstance() *PathManager {
 	once.Do(func() {
 		ip, err := collector.GetIP()
 		if err != nil {
 			return
 		}
-
+		// 使用GetDefaultTargetIP获取默认目标IP
+		defaultTargetIP := GetDefaultTargetIP()
 		instance = &PathManager{
 			pathChan:      make(chan []k_shortest.PathWithIP, 1),
 			latestPaths:   nil,
 			sourceIP:      ip,
-			destinationIP: "143.198.130.37",
+			destinationIP: defaultTargetIP,
 			k:             2,
 		}
 

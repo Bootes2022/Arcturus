@@ -29,7 +29,6 @@ func NewGrpcClient(address string, fileManager *storage.FileManager) (*GrpcClien
 	var conn *grpc.ClientConn
 	var err error
 
-	log.Println("")
 	maxRetries := 3
 	for i := 0; i < maxRetries; i++ {
 		conn, err = grpc.Dial(address,
