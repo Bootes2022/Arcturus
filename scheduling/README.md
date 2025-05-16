@@ -2,22 +2,6 @@
 
 The Arcturus Scheduling Plane serves as the **central configuration and coordination hub** for the entire acceleration system. It is the critical component that must be initialized first during system startup, as it manages global system configuration, node registration, and orchestrates the entire distributed acceleration infrastructure.
 
-## Table of Contents
-- [Overview](#overview)
-- [Scheduling Architecture](#scheduling-architecture)
-- [Key Components](#key-components)
-  - [Controller and Proxy Nodes](#controller-and-proxy-nodes)
-  - [Data Synchronization](#data-synchronization)
-  - [Regional Scheduling Groups](#regional-scheduling-groups)
-- [Database Schema](#database-schema)
-  - [Node Region Table](#node-region-table)
-  - [System Info Table](#system-info-table)
-  - [Region Probe Info Table](#region-probe-info-table)
-  - [Network Metrics Table](#network-metrics-table)
-  - [Domain Origin Table](#domain-origin-table)
-- [Installation](#installation)
-- [License](#license)
-
 ## Overview
 
 The **Scheduling Plane** is the brain of the Arcturus acceleration system. As the primary configuration center, it:
@@ -29,66 +13,6 @@ The **Scheduling Plane** is the brain of the Arcturus acceleration system. As th
 - **Maintains the global view** of network topology and health status
 
 Without the Scheduling Plane running, no other component of the acceleration system can function properly. It provides the foundation upon which all distributed operations are built.
-
-## Scheduling Architecture
-
-The scheduling architecture implements a hierarchical design with specialized roles:
-
-### Core Components
-
-1. **Controller Nodes**: Master nodes that:
-   - Aggregate global performance data
-   - Make high-level routing decisions
-   - Manage configuration distribution
-   - Coordinate system-wide operations
-
-2. **Proxy Nodes**: Edge nodes that:
-   - Execute local routing decisions
-   - Report performance metrics
-   - Implement forwarding policies
-   - Handle actual traffic processing
-
-![Scheduling Architecture](assets/process.svg)
-
-### Key Functions
-
-1. **Configuration Management**: Distributes and synchronizes system configurations across all nodes
-2. **Node Registration**: Manages node discovery and health monitoring
-3. **Path Optimization**: Calculates optimal routes based on real-time network conditions
-4. **Performance Monitoring**: Continuously collects and analyzes system metrics
-5. **Fault Tolerance**: Detects failures and triggers automatic failover mechanisms
-
-## Key Components
-
-### Controller and Proxy Nodes
-
-The scheduling system operates on a distributed model where:
-
-- **Controller nodes** maintain the global state and make strategic decisions
-- **Proxy nodes** handle tactical execution and report local conditions
-- Both node types share scheduling logic but differ in scope and authority
-- Data synchronization occurs every **5 seconds** to balance responsiveness with stability
-
-### Data Synchronization
-
-The system synchronizes two types of data:
-
-1. **Static Data**: Network topology, user configurations, and routing policies
-2. **Dynamic Data**: Real-time metrics including CPU usage, latency, and bandwidth
-
-To ensure efficient data propagation:
-- Static data uses incremental updates
-- Dynamic data employs compression and aggregation
-- Critical changes trigger immediate synchronization
-
-### Regional Scheduling Groups
-
-Nodes are organized into regional groups for optimal performance:
-
-- Each group elects a **master node** for local coordination
-- Groups handle regional traffic patterns independently
-- Inter-group communication enables global optimization
-- This hierarchy reduces latency and improves scalability
 
 ## Database Schema
 
