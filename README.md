@@ -46,40 +46,26 @@ Unlike traditional cloud-tied GA solutions, Arcturus achieves **1.7× faster acc
 
 ## 🏗️ Architecture 
 1. **Controller Nodes**: Master nodes that:
-   - Aggregate global performance data
-   - Make high-level routing decisions
-   - Manage configuration distribution
-   - Coordinate system-wide operations
+   - Aggregate global performance metrics
+   - Analyze data and formulate high-level routing decisions
+   - Manage configuration distribution to all nodes
+   - Coordinate system-wide operations to ensure consistency
 
 2. **Proxy Nodes**: Edge nodes that:
-   - Execute local routing decisions
-   - Report performance metrics
-   - Implement forwarding policies
-   - Handle actual traffic processing
+   - Receive and implement controller-distributed forwarding policies
+   - ​​Execute localized routing decisions
+   - ​​Process traffic flows with policy enforcement
+   - Report real-time performance telemetry to controllers
 
 ![Scheduling Architecture](scheduling/assets/process.svg)
 
 ## 🚀 Quick Start Guide
 
-### 📋 Prerequisites
-| Requirement       | Version  | Verification Command       |
-|-------------------|----------|----------------------------|
-| Kubernetes        | ≥1.23    | `kubectl version --short`  |
-| Terraform         | ≥1.4     | `terraform --version`       |
-| Helm              | ≥3.11    | `helm version --short`      |
 
-## 🛠️ Installation
-### Method : Helm 
-```bash
-# Add Arcturus repo
-helm repo add arcturus https://charts.arcturus.io/stable
+![Scheduling Architecture](scheduling/README.md)
 
-# Install with production profile
-helm install arcturus arcturus/arcturus \
-  --namespace arcturus-system \
-  --create-namespace \
-  --values https://raw.githubusercontent.com/your-repo/arcturus/main/config/production.yaml
-```
+
+![Scheduling Architecture](forwarding/README.md)
 
 ## License Agreement
 
