@@ -17,7 +17,7 @@
 | **​​Hybrid Scheduling​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
 
 ## 🏆 Comparative Metrics
-### Public Internet vs Arcturus Latency Comparison (Washington / Osaka / London Server Deployment)
+### Public Internet vs Arcturus Latency Comparison
 
 | Route                      | Direct (ms) | Arcturus (ms) | Improvement |
 |----------------------------|-------------|---------------|-------------|
@@ -32,7 +32,7 @@
 
 ## Global Latency Comparison: GCP vs. AWS vs. Arcturus
 
-| Route                  | Provider   | Baseline Latency (ms) | Arcturus Latency (ms) | Improvement (%) |
+| Route                  | Provider   | Baseline (ms) | Arcturus (ms) | Improvement (%) |
 |------------------------|------------|----------------------|----------------------|-----------------|
 | Bangalore → New York   | GCP        | 267.0                | 142.0                | 46.8%          |
 | Johannesburg → NY      | GCP        | 176.0                | 128.0                | 27.3%          |
