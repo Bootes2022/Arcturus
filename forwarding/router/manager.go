@@ -26,77 +26,77 @@ var (
 	once     sync.Once
 )
 
-// fileManagerInstance是当前应用使用的FileManager实例
+// fileManagerInstance is the FileManager instance used by the current application
 var (
 	fileManagerInstance *storage.FileManager
 	fileManagerOnce     sync.Once
 )
 
-// getFileManager 获取FileManager的单例实例
+// getFileManager retrieves the singleton instance of FileManager
 func getFileManager() *storage.FileManager {
 	fileManagerOnce.Do(func() {
 		var err error
 		fileManagerInstance, err = storage.NewFileManager("./config")
 		if err != nil {
-			log.Printf("无法创建FileManager: %v", err)
+			log.Printf("Failed to create FileManager: %v", err)
 			return
 		}
 	})
 	return fileManagerInstance
 }
 
-// GetTargetIPByDomain 从域名映射中查找对应的目标IP
+// GetTargetIPByDomain looks up the corresponding target IP from the domain mapping
 func GetTargetIPByDomain(domain string) string {
-	// 获取FileManager实例
+	// Get the FileManager instance
 	fileManager := getFileManager()
 	if fileManager == nil {
-		log.Printf("无法获取FileManager实例")
+		log.Printf("Failed to retrieve FileManager instance")
 		return ""
 	}
 
-	// 获取所有域名映射
+	// Get all domain mappings
 	mappings := fileManager.GetDomainIPMappings()
 	if mappings == nil {
-		log.Printf("域名映射为空")
+		log.Printf("Domain mappings are empty")
 		return ""
 	}
 
-	// 查找匹配的域名
+	// Find the matching domain
 	for _, mapping := range mappings {
 		if mapping.Domain == domain {
-			log.Printf("找到域名 %s 的映射IP: %s", domain, mapping.Ip)
+			log.Printf("Found mapped IP for domain %s: %s", domain, mapping.Ip)
 			return mapping.Ip
 		}
 	}
 
-	// 未找到映射时返回空字符串
-	log.Printf("未找到域名 %s 的映射", domain)
+	// Return empty string if no mapping is found
+	log.Printf("No mapping found for domain %s", domain)
 	return ""
 }
 
-// GetDefaultTargetIP 获取默认目标IP
-// 返回域名映射中的第一条记录的IP
-// 如果没有映射记录，则返回空字符串
+// GetDefaultTargetIP retrieves the default target IP
+// Returns the IP of the first record in the domain mapping
+// Returns an empty string if there are no mapping records
 func GetDefaultTargetIP() string {
-	// 获取FileManager实例
+	// Get the FileManager instance
 	fileManager := getFileManager()
 	if fileManager == nil {
-		log.Printf("无法获取FileManager实例")
+		log.Printf("Failed to retrieve FileManager instance")
 		return ""
 	}
 
-	// 获取所有域名映射
+	// Get all domain mappings
 	mappings := fileManager.GetDomainIPMappings()
 
-	// 如果有映射记录，返回第一条记录的IP
+	// If there are mapping records, return the IP of the first record
 	if mappings != nil && len(mappings) > 0 {
 		defaultIP := mappings[0].Ip
-		log.Printf("使用第一个域名映射的IP: %s 作为默认目标", defaultIP)
+		log.Printf("Using IP from the first domain mapping: %s as default target", defaultIP)
 		return defaultIP
 	}
 
-	// 没有映射记录时返回空字符串
-	log.Printf("域名映射为空，无默认目标IP")
+	// Return empty string if there are no mapping records
+	log.Printf("Domain mappings are empty, no default target IP available")
 	return ""
 }
 
@@ -106,7 +106,7 @@ func GetInstance() *PathManager {
 		if err != nil {
 			return
 		}
-		// 使用GetDefaultTargetIP获取默认目标IP
+		// Use GetDefaultTargetIP to get the default target IP
 		defaultTargetIP := GetDefaultTargetIP()
 		instance = &PathManager{
 			pathChan:      make(chan []k_shortest.PathWithIP, 1),
