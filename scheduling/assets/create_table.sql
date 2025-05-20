@@ -1,4 +1,4 @@
---
+
 CREATE TABLE system_info (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     ip VARCHAR(45) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE system_info (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
--- 
+
 CREATE TABLE region_probe_info (
     id INT AUTO_INCREMENT PRIMARY KEY,
     source_ip VARCHAR(15) NOT NULL,
@@ -43,31 +43,31 @@ CREATE TABLE region_probe_info (
     tcp_delay INT NOT NULL,
     probe_time DATETIME NOT NULL
 );
--- 
+
 CREATE TABLE network_metrics (
-    id INT AUTO_INCREMENT PRIMARY KEY,          -- ID，
-    source_ip VARCHAR(15) NOT NULL,            -- 
-    destination_ip VARCHAR(15) NOT NULL,         -- 
-    link_latency FLOAT NOT NULL,                -- （：）
-    cpu_mean FLOAT NOT NULL,                 -- CPU
-    cpu_variance FLOAT NOT NULL,             -- CPU
-    virtual_queue_cpu_mean FLOAT NOT NULL,      -- CPU
-    virtual_queue_cpu_variance FLOAT NOT NULL,  -- CPU
-    C INT,                                       -- C
+    id INT AUTO_INCREMENT PRIMARY KEY,     
+    source_ip VARCHAR(15) NOT NULL,          
+    destination_ip VARCHAR(15) NOT NULL,      
+    link_latency FLOAT NOT NULL,           
+    cpu_mean FLOAT NOT NULL,              
+    cpu_variance FLOAT NOT NULL,          
+    virtual_queue_cpu_mean FLOAT NOT NULL,      
+    virtual_queue_cpu_variance FLOAT NOT NULL,  
+    C INT,                                    
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- 
 );
--- 
+
 CREATE TABLE domain_origin (
-    domain VARCHAR(20) PRIMARY KEY,   -- 
-    origin_ip VARCHAR(20) NOT NULL,     --  IP
+    domain VARCHAR(20) PRIMARY KEY,
+    origin_ip VARCHAR(20) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- 
 );
--- 
+
 CREATE TABLE node_region (
    id INT AUTO_INCREMENT PRIMARY KEY,
-   ip VARCHAR(50) NOT NULL UNIQUE COMMENT 'IP',
-   region VARCHAR(50) NOT NULL COMMENT '',
-   hostname VARCHAR(100) COMMENT '',
-   description VARCHAR(255) COMMENT '',
-   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT ''
+   ip VARCHAR(50) NOT NULL UNIQUE,
+   region VARCHAR(50) NOT NULL,
+   hostname VARCHAR(100),
+   description VARCHAR(255),
+   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
