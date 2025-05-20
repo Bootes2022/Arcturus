@@ -104,6 +104,11 @@ install_etcd() {
         sudo tar -xzf $DOWNLOAD_DIR/etcd.tar.gz -C $DOWNLOAD_DIR
         sudo mv $DOWNLOAD_DIR/etcd-${ETCD_VER}-linux-amd64/etcd* $ETCD_DIR/
         
+        echo "Setting executable permissions for etcd binaries..."
+        sudo chmod +x $ETCD_DIR/etcd
+        sudo chmod +x $ETCD_DIR/etcdctl
+        sudo chmod +x $ETCD_DIR/etcdutl
+        
         # Create symbolic links
         sudo ln -sf $ETCD_DIR/etcd /usr/local/bin/etcd
         sudo ln -sf $ETCD_DIR/etcdctl /usr/local/bin/etcdctl
