@@ -58,7 +58,13 @@
 ![Scheduling Architecture](scheduling/assets/process.svg)
 
 ## 🚀 Quick Start Guide
-For Quick Start , refer to:  
+```bash
+wget https://github.com/Lvpcgithub/Arcturus/archive/refs/heads/main.zip && \
+unzip main.zip && \
+mv Arcturus-main Arcturus && \
+rm main.zip
+```
+
 • [Scheduling ](./scheduling/README.md) - run scheduling plane                      
 • [Forwarding ](./forwarding/README.md) - run forwarding plane
 
