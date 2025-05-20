@@ -5,6 +5,7 @@ set -e
 DB_NAME="myapp_db"
 DB_USER="myapp_user"
 DB_PASSWORD="StrongPassword123!"
+SQL_SCRIPT="/assets/create_tables.sql"  # SQL script filename
 
 install_mysql() {
     echo "Starting MySQL installation..."
@@ -123,10 +124,59 @@ EOF
     echo "MySQL configuration completed successfully"
 }
 
-# Execute installation
+# Function: Execute SQL script to create tables
+create_tables() {
+    echo "Starting table creation in database $DB_NAME..."
+    
+    # Check if SQL script file exists
+    if [ ! -f "$SQL_SCRIPT" ]; then
+        echo "Error: SQL script file $SQL_SCRIPT not found!"
+        exit 1
+    fi
+
+    # Execute SQL script
+    echo "Executing SQL script $SQL_SCRIPT..."
+    mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "$SQL_SCRIPT"
+    
+    # Check execution result
+    if [ $? -eq 0 ]; then
+        echo "SQL script executed successfully!"
+        
+        # Verify tables were created
+        echo "Verifying table creation..."
+        mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "SHOW TABLES;"
+    else
+        echo "Error: Failed to execute SQL script!"
+        exit 1
+    fi
+}
+
+# Main execution flow
+echo "=== Starting database deployment ==="
+
+# 1. Install MySQL
 install_mysql
 
-# Verify installation
+# 2. Verify MySQL installation
 echo "Verifying MySQL installation..."
-mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES;"
-mysql --version
+if ! mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES;" &> /dev/null; then
+    echo "Error: MySQL connection failed!"
+    exit 1
+fi
+
+# 3. Check if database exists, create if it doesn't
+echo "Checking database $DB_NAME..."
+DB_EXISTS=$(mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES LIKE '$DB_NAME'" | grep "$DB_NAME")
+
+if [ -z "$DB_EXISTS" ]; then
+    echo "Database $DB_NAME does not exist, creating it..."
+    mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "CREATE DATABASE $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    echo "Database $DB_NAME created successfully."
+else
+    echo "Database $DB_NAME already exists."
+fi
+
+# 4. Create tables
+create_tables
+
+echo "=== Database deployment completed successfully ==="
