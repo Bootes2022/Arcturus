@@ -1,7 +1,5 @@
 package traefik_config
 
-// Traefik configuration data structures
-
 // TraefikConfig represents the top-level Traefik configuration
 type TraefikConfig struct {
 	HTTP HTTPConfig `json:"http"`
@@ -19,6 +17,7 @@ type Router struct {
 	Rule        string   `json:"rule"`
 	Service     string   `json:"service"`
 	Middlewares []string `json:"middlewares,omitempty"`
+	EntryPoints []string `json:"entryPoints,omitempty"`
 }
 
 // Service defines a Traefik service configuration
@@ -48,17 +47,8 @@ type RedirectRegex struct {
 	Permanent   bool   `json:"permanent"`
 }
 
-// Domain mapping data structures
-
 // DomainMapping represents a mapping between a domain and multiple IP addresses
 type DomainMapping struct {
 	Domain string   `json:"domain"`
 	IPs    []string `json:"ips"`
-}
-
-// APIResponse represents a standard API response
-type APIResponse struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
 }

@@ -4,7 +4,6 @@ import (
 	"strings"
 )
 
-// generateTraefikConfig creates a Traefik configuration from domain mappings
 func generateTraefikConfig(mappings []DomainMapping) TraefikConfig {
 	config := TraefikConfig{
 		HTTP: HTTPConfig{
@@ -14,40 +13,36 @@ func generateTraefikConfig(mappings []DomainMapping) TraefikConfig {
 		},
 	}
 
-	// Add the global redirect middleware
-	config.HTTP.Middlewares["ip-redirect"] = Middleware{
-		RedirectRegex: &RedirectRegex{
-			Regex:       "^https?://([^/]+)(.*)",
-			Replacement: "${url}$2",
-			Permanent:   false,
+	config.HTTP.Services["dummy-service"] = Service{
+		LoadBalancer: &LoadBalancer{
+			Servers: []Server{
+				{URL: "http://localhost:8080"},
+			},
 		},
 	}
 
-	// Create routers and services for each domain mapping
 	for _, mapping := range mappings {
+		if len(mapping.IPs) == 0 {
+			continue
+		}
+
+		targetIP := mapping.IPs[0]
 		routerName := sanitizeName(mapping.Domain) + "-router"
-		serviceName := sanitizeName(mapping.Domain) + "-service"
+		middlewareName := "redirect-to-" + sanitizeName(mapping.Domain)
 
-		// Create the router
-		config.HTTP.Routers[routerName] = Router{
-			Rule:        "Host(`" + mapping.Domain + "`)",
-			Service:     serviceName,
-			Middlewares: []string{"ip-redirect"},
-		}
-
-		// Create the servers list
-		var servers []Server
-		for _, ip := range mapping.IPs {
-			servers = append(servers, Server{
-				URL: "http://" + ip,
-			})
-		}
-
-		// Create the service with load balancer
-		config.HTTP.Services[serviceName] = Service{
-			LoadBalancer: &LoadBalancer{
-				Servers: servers,
+		config.HTTP.Middlewares[middlewareName] = Middleware{
+			RedirectRegex: &RedirectRegex{
+				Regex:       ".*",
+				Replacement: "http://" + targetIP + "/",
+				Permanent:   false,
 			},
+		}
+
+		config.HTTP.Routers[routerName] = Router{
+			Rule:        "Path(`/resolve/" + mapping.Domain + "`)",
+			Service:     "dummy-service",
+			Middlewares: []string{middlewareName},
+			EntryPoints: []string{"web"},
 		}
 	}
 
