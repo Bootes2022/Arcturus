@@ -1,0 +1,26 @@
+# domain-resolver.yml
+http:
+  routers:
+    # 为example.com配置多个权重路由
+    example-ip1-router:
+      rule: "Path(`/resolve/example.com`)"
+      service: "dummy-service"  # 实际服务不重要
+      middlewares:
+        - "redirect-to-ip1"
+      entryPoints:
+        - "web"
+
+
+  middlewares:
+    redirect-to-ip1:
+      redirectregex:
+        regex: ".*"
+        replacement: "http://1.92.150.161:50055/"
+        permanent: false
+
+
+  services:
+    dummy-service:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:8080"  # 实际不会被使用
