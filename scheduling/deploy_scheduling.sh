@@ -11,6 +11,24 @@ else
     exit 1
 fi
 
+# --- Set Default Values (if not provided in config file) ---
+# MySQL Configuration Defaults
+if [ -z "$MYSQL_ROOT_PASSWORD" ]; then
+    echo "Warning: MYSQL_ROOT_PASSWORD is not set in $CONFIG_FILE. Using a default (unsafe) or prompting might be needed."
+    MYSQL_ROOT_PASSWORD="unsafe_default_root_password_CHANGE_ME" 
+fi
+MYSQL_DB_NAME="${MYSQL_DB_NAME:-"myapp_db"}"
+MYSQL_DB_USER="${MYSQL_DB_USER:-"myapp_user"}"
+if [ -z "$MYSQL_DB_PASSWORD" ]; then
+    echo "Warning: MYSQL_DB_PASSWORD is not set in $CONFIG_FILE. Using a default (unsafe) or prompting might be needed."
+    MYSQL_DB_PASSWORD="unsafe_default_app_password_CHANGE_ME" 
+fi
+MYSQL_SQL_SCRIPT_PATH="${MYSQL_SQL_SCRIPT_PATH:-"/assets/create_tables.sql"}"
+
+MYSQL_APT_CONFIG_PKG_URL="${MYSQL_APT_CONFIG_PKG_URL:-"https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb"}"
+MYSQL_YUM_REPO_PKG_URL="${MYSQL_YUM_REPO_PKG_URL:-"https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm"}"
+# --- End of Default Values ---
+
 # MySQL configuration parameters are now from $CONFIG_FILE
 # DB_NAME, DB_USER, DB_PASSWORD are used for the application user.
 # MYSQL_ROOT_PASSWORD is for the MySQL root user.
