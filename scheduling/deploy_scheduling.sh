@@ -1,22 +1,27 @@
 #!/bin/bash
 set -e
 
-# MySQL configuration parameters (modify as needed)
-DB_NAME="myapp_db"
-DB_USER="myapp_user"
-DB_PASSWORD="StrongPassword123!"
-SQL_SCRIPT="/assets/create_tables.sql"  # SQL script filename
+# Load configuration
+CONFIG_FILE="../setup.conf"
+if [ -f "$CONFIG_FILE" ]; then
+    echo "Loading configuration from $CONFIG_FILE"
+    source "$CONFIG_FILE"
+else
+    echo "Error: Configuration file $CONFIG_FILE not found!"
+    exit 1
+fi
+
+# MySQL configuration parameters are now from $CONFIG_FILE
+# DB_NAME, DB_USER, DB_PASSWORD are used for the application user.
+# MYSQL_ROOT_PASSWORD is for the MySQL root user.
 
 install_mysql() {
     echo "Starting MySQL installation..."
-    
-    # 1. Check if MySQL is already installed
+
     if command -v mysql >/dev/null 2>&1; then
         MYSQL_VERSION=$(mysql --version | awk '{print $3}')
         echo "MySQL is already installed (Version: $MYSQL_VERSION)"
-        # Continue with configuration even if MySQL is already installed
     else
-        # 2. Install MySQL based on OS
         if [ -f /etc/os-release ]; then
             . /etc/os-release
             OS=$NAME
@@ -25,158 +30,151 @@ install_mysql() {
             OS=$(uname -s)
             OS_VERSION=""
         fi
-
         echo "Detected OS: $OS $OS_VERSION"
-        
-        # Ubuntu/Debian installation
+
         if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]]; then
             echo "Installing MySQL on Debian/Ubuntu..."
-            
-            # Add MySQL APT repository
             sudo apt-get update
             sudo apt-get install -y wget
-            wget https://dev.mysql.com/get/mysql-apt-config_0.8.22-1_all.deb
-            sudo dpkg -i mysql-apt-config_0.8.22-1_all.deb
+            MYSQL_APT_PKG_FILENAME=$(basename "$MYSQL_APT_CONFIG_PKG_URL")
+            wget "$MYSQL_APT_CONFIG_PKG_URL"
+            sudo dpkg -i "$MYSQL_APT_PKG_FILENAME" # You might need to handle interactive prompts here or pre-configure selections
             sudo apt-get update
-            
-            # Install MySQL Server with automatic root password setup
-            echo "mysql-community-server mysql-community-server/root-pass password $DB_PASSWORD" | sudo debconf-set-selections
-            echo "mysql-community-server mysql-community-server/re-root-pass password $DB_PASSWORD" | sudo debconf-set-selections
+            rm "$MYSQL_APT_PKG_FILENAME"
+
+            echo "mysql-community-server mysql-community-server/root-pass password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
+            echo "mysql-community-server mysql-community-server/re-root-pass password $MYSQL_ROOT_PASSWORD" | sudo debconf-set-selections
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y mysql-server
-            
-            # Start service
+
             sudo systemctl start mysql
             sudo systemctl enable mysql
-            
-        # CentOS/RHEL installation
         elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
             echo "Installing MySQL on CentOS/RHEL..."
-            
-            # Add MySQL Yum repository
-            sudo yum install -y https://dev.mysql.com/get/mysql80-community-release-el9-1.noarch.rpm
-            
-            # Disable default MySQL module (important for CentOS 8/9)
-            sudo dnf module disable -y mysql
-            
-            # Install MySQL Server
+            sudo yum install -y "$MYSQL_YUM_REPO_PKG_URL"
+            if [[ "$OS_VERSION" == "8" ]] || [[ "$OS_VERSION" == "9" ]] || [[ "$OS" == *"Rocky Linux"* ]] || [[ "$OS" == *"AlmaLinux"* ]]; then
+                 sudo dnf module disable -y mysql # For RHEL 8/9 and derivatives
+            fi
             sudo yum install -y mysql-community-server
-            
-            # Start service
+
             sudo systemctl start mysqld
             sudo systemctl enable mysqld
-            
-            # Get temporary password (only for fresh install)
+
+            # For fresh installs on RHEL-based systems, MySQL generates a temporary root password.
+            # We need to change it.
+            echo "Attempting to set MySQL root password..."
+            # Wait a bit for mysqld.log to be populated
+            sleep 5
             if sudo grep -q 'temporary password' /var/log/mysqld.log; then
-                TEMP_PASSWORD=$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}')
-                # Security configuration
-                mysql --connect-expired-password -uroot -p"$TEMP_PASSWORD" <<EOF
-ALTER USER 'root'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+                TEMP_PASSWORD=$(sudo grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}' | tail -n 1)
+                if [ -n "$TEMP_PASSWORD" ]; then
+                    echo "Temporary root password found. Changing it now."
+                    mysql --connect-expired-password -uroot -p"$TEMP_PASSWORD" <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$MYSQL_ROOT_PASSWORD';
 FLUSH PRIVILEGES;
 EOF
+                    echo "MySQL root password changed."
+                else
+                    echo "Could not extract temporary password. Manual intervention might be needed or password already set."
+                fi
             else
-                # If no temporary password found, assume password was already set
-                echo "No temporary password found, assuming root password is already set"
+                echo "No temporary password found in logs. Assuming root password is '$MYSQL_ROOT_PASSWORD' or already set."
+                # Attempt to login with the configured root password to verify, or just proceed.
+                # This part can be tricky if the password was set by other means.
             fi
         else
             echo "Unsupported OS for automatic MySQL installation."
             exit 1
         fi
-        
         echo "MySQL installation completed successfully"
     fi
 
-    # 3. Create application database and user
     echo "Configuring MySQL database and user..."
-    
-    # Check if database exists
-    if ! mysql -uroot -p"$DB_PASSWORD" -e "USE $DB_NAME" 2>/dev/null; then
-        echo "Creating database $DB_NAME..."
-        mysql -uroot -p"$DB_PASSWORD" <<EOF
-CREATE DATABASE $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    if ! mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "USE $MYSQL_DB_NAME" 2>/dev/null; then
+        echo "Creating database $MYSQL_DB_NAME..."
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<EOF
+CREATE DATABASE IF NOT EXISTS $MYSQL_DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 EOF
     else
-        echo "Database $DB_NAME already exists"
+        echo "Database $MYSQL_DB_NAME already exists"
     fi
 
-    # Check if user exists
-    USER_EXISTS=$(mysql -uroot -p"$DB_PASSWORD" -sN -e "SELECT COUNT(*) FROM mysql.user WHERE user='$DB_USER'")
-    
+    USER_EXISTS=$(mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -sN -e "SELECT COUNT(*) FROM mysql.user WHERE user='$MYSQL_DB_USER'")
     if [ "$USER_EXISTS" -eq 0 ]; then
-        echo "Creating MySQL user $DB_USER..."
-        mysql -uroot -p"$DB_PASSWORD" <<EOF
-CREATE USER '$DB_USER'@'%' IDENTIFIED BY '$DB_PASSWORD';
-GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$DB_USER'@'%';
+        echo "Creating MySQL user $MYSQL_DB_USER..."
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<EOF
+CREATE USER '$MYSQL_DB_USER'@'%' IDENTIFIED BY '$MYSQL_DB_PASSWORD';
+GRANT ALL PRIVILEGES ON $MYSQL_DB_NAME.* TO '$MYSQL_DB_USER'@'%';
 FLUSH PRIVILEGES;
 EOF
     else
-        echo "User $DB_USER already exists"
+        echo "User $MYSQL_DB_USER already exists. Ensuring privileges..."
+        mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<EOF
+GRANT ALL PRIVILEGES ON $MYSQL_DB_NAME.* TO '$MYSQL_DB_USER'@'%';
+ALTER USER '$MYSQL_DB_USER'@'%' IDENTIFIED BY '$MYSQL_DB_PASSWORD';
+FLUSH PRIVILEGES;
+EOF
     fi
 
-    # 4. Security hardening
-    echo "Securing MySQL installation..."
-    mysql -uroot -p"$DB_PASSWORD" <<EOF
+    echo "Securing MySQL installation (basic hardening)..."
+    mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<EOF
 DELETE FROM mysql.user WHERE User='';
 DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
 DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 FLUSH PRIVILEGES;
 EOF
-
     echo "MySQL configuration completed successfully"
 }
 
-# Function: Execute SQL script to create tables
 create_tables() {
-    echo "Starting table creation in database $DB_NAME..."
-    
-    # Check if SQL script file exists
-    if [ ! -f "$SQL_SCRIPT" ]; then
-        echo "Error: SQL script file $SQL_SCRIPT not found!"
+    echo "Starting table creation in database $MYSQL_DB_NAME..."
+    if [ ! -f "$MYSQL_SQL_SCRIPT_PATH" ]; then
+        echo "Error: SQL script file $MYSQL_SQL_SCRIPT_PATH not found!"
         exit 1
     fi
 
-    # Execute SQL script
-    echo "Executing SQL script $SQL_SCRIPT..."
-    mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "$SQL_SCRIPT"
-    
-    # Check execution result
+    echo "Executing SQL script $MYSQL_SQL_SCRIPT_PATH..."
+    mysql -u"$MYSQL_DB_USER" -p"$MYSQL_DB_PASSWORD" "$MYSQL_DB_NAME" < "$MYSQL_SQL_SCRIPT_PATH"
     if [ $? -eq 0 ]; then
         echo "SQL script executed successfully!"
-        
-        # Verify tables were created
         echo "Verifying table creation..."
-        mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" -e "SHOW TABLES;"
+        mysql -u"$MYSQL_DB_USER" -p"$MYSQL_DB_PASSWORD" "$MYSQL_DB_NAME" -e "SHOW TABLES;"
     else
         echo "Error: Failed to execute SQL script!"
         exit 1
     fi
 }
 
-# Main execution flow
 echo "=== Starting database deployment ==="
-
-# 1. Install MySQL
 install_mysql
 
-# 2. Verify MySQL installation
-echo "Verifying MySQL installation..."
-if ! mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES;" &> /dev/null; then
-    echo "Error: MySQL connection failed!"
+echo "Verifying MySQL connection with application user..."
+if ! mysql -u"$MYSQL_DB_USER" -p"$MYSQL_DB_PASSWORD" -e "SHOW DATABASES LIKE '$MYSQL_DB_NAME';" &> /dev/null; then
+    echo "Error: MySQL connection failed for user $MYSQL_DB_USER or database $MYSQL_DB_NAME not accessible!"
+    # Check if DB exists with root, then if user can access it
+    if mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW DATABASES LIKE '$MYSQL_DB_NAME';" | grep "$MYSQL_DB_NAME"; then
+        echo "Database $MYSQL_DB_NAME exists, but user $MYSQL_DB_USER might lack privileges or have wrong password."
+    else
+        echo "Database $MYSQL_DB_NAME might not exist."
+    fi
     exit 1
-fi
-
-# 3. Check if database exists, create if it doesn't
-echo "Checking database $DB_NAME..."
-DB_EXISTS=$(mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "SHOW DATABASES LIKE '$DB_NAME'" | grep "$DB_NAME")
-
-if [ -z "$DB_EXISTS" ]; then
-    echo "Database $DB_NAME does not exist, creating it..."
-    mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "CREATE DATABASE $DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-    echo "Database $DB_NAME created successfully."
 else
-    echo "Database $DB_NAME already exists."
+    echo "MySQL connection successful for user $MYSQL_DB_USER on database $MYSQL_DB_NAME."
 fi
 
-# 4. Create tables
-create_tables
+# Database existence check already handled within install_mysql, but can be re-verified
+DB_EXISTS=$(mysql -u"$MYSQL_DB_USER" -p"$MYSQL_DB_PASSWORD" -e "SHOW DATABASES LIKE '$MYSQL_DB_NAME'" | grep "$MYSQL_DB_NAME")
+if [ -z "$DB_EXISTS" ]; then
+    echo "Database $MYSQL_DB_NAME does not exist or not accessible by $MYSQL_DB_USER. This should have been created in install_mysql."
+    # Attempt to create it again, though this indicates a prior issue.
+    echo "Attempting to create database $MYSQL_DB_NAME again with root..."
+    mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS $MYSQL_DB_NAME CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+    mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "GRANT ALL PRIVILEGES ON $MYSQL_DB_NAME.* TO '$MYSQL_DB_USER'@'%';"
+    mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "FLUSH PRIVILEGES;"
+    echo "Database $MYSQL_DB_NAME creation/permission grant attempted."
+else
+    echo "Database $MYSQL_DB_NAME already exists and is accessible."
+fi
 
+create_tables
 echo "=== Database deployment completed successfully ==="
