@@ -68,8 +68,8 @@ cd /Arcturus
 
 # Add execute permissions to all scripts that need to be run (one-time operation)
 chmod +x setup_public_env.sh
-chmod +x /forwarding/deploy_forwarding.sh
-chmod +x /scheduling/deploy_scheduling.sh
+chmod +x forwarding/deploy_forwarding.sh
+chmod +x scheduling/deploy_scheduling.sh
 
 # Run common environment setup (e.g., Go, etcd)
 ./setup_public_env.sh
