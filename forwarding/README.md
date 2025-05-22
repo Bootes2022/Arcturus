@@ -1,7 +1,5 @@
 # Forwarding
 
-A distributed multi-node forwarding system designed for high-performance network traffic routing and optimization. The system leverages advanced techniques including TCP connection pooling, stream multiplexing, packet merging, and segment routing to achieve optimal throughput while maintaining low latency.
-
 ## Overview
 
 The Forwarding System is a distributed architecture where multiple nodes work collaboratively to forward network traffic efficiently. Each node in the system deploys forwarding functionality and participates in a coordinated network that ensures optimal data transmission across different geographical locations.
