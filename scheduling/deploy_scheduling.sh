@@ -1,13 +1,36 @@
 #!/bin/bash
 set -e
 
-# Load configuration
-CONFIG_FILE="../setup.conf"
-if [ -f "$CONFIG_FILE" ]; then
-    echo "Loading configuration from $CONFIG_FILE"
-    source "$CONFIG_FILE"
+# ==============================================================================
+#  Determine script directory and root project directory
+#  THIS MUST BE AT THE VERY BEGINNING OF THE SCRIPT, BEFORE ANY 'cd' COMMANDS
+# ==============================================================================
+SCRIPT_DIR_REALPATH=$(realpath "${BASH_SOURCE[0]}") # Get absolute real path of the script
+SCRIPT_DIR="$(dirname "$SCRIPT_DIR_REALPATH")"     # Get the directory of the script
+
+# Assuming this script is in Arturus/scheduling/
+# Go one level up from SCRIPT_DIR to get ROOT_PROJECT_DIR
+ROOT_PROJECT_DIR="$(realpath "$SCRIPT_DIR/..")"
+# ==============================================================================
+
+# Your DEBUG code can be placed here, or before loading the configuration
+echo "DEBUG (Initial): Current PWD at script start: $(pwd)" # This pwd reflects the directory when the script was invoked
+echo "DEBUG (Initial): SCRIPT_DIR_REALPATH: $SCRIPT_DIR_REALPATH"
+echo "DEBUG (Initial): SCRIPT_DIR: $SCRIPT_DIR"
+echo "DEBUG (Initial): ROOT_PROJECT_DIR: $ROOT_PROJECT_DIR"
+
+# --- Load Configuration ---
+CONFIG_FILE_NAME="setup.conf"
+CONFIG_FILE_PATH="$ROOT_PROJECT_DIR/$CONFIG_FILE_NAME"
+
+echo "DEBUG: Attempting to load config from: $CONFIG_FILE_PATH" # Print the path being attempted for loading
+
+if [ -f "$CONFIG_FILE_PATH" ]; then
+    echo "Loading configuration from $CONFIG_FILE_PATH"
+    source "$CONFIG_FILE_PATH"
 else
-    echo "Error: Configuration file $CONFIG_FILE not found!"
+    echo "Error: Configuration file $CONFIG_FILE_PATH not found!"
+    echo "Please ensure '$CONFIG_FILE_NAME' exists in '$ROOT_PROJECT_DIR'."
     exit 1
 fi
 
