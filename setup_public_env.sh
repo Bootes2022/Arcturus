@@ -2,14 +2,42 @@
 set -e
 
 # Load configuration
-CONFIG_FILE="setup.conf"
+CONFIG_FILE="setup.conf" 
 if [ -f "$CONFIG_FILE" ]; then
     echo "Loading configuration from $CONFIG_FILE"
     source "$CONFIG_FILE"
 else
-    echo "Error: Configuration file $CONFIG_FILE not found!"
-    exit 1
+    echo "Warning: Configuration file $CONFIG_FILE not found. Using default values."
 fi
+
+# --- Set Default Values (if not provided in config file) ---
+# Go Configuration Defaults
+REQUIRED_GO_VERSION="${REQUIRED_GO_VERSION:-"go1.23"}"
+GO_INSTALL_VERSION="${GO_INSTALL_VERSION:-"go1.23.7"}" 
+GO_ARCH="${GO_ARCH:-"linux-amd64"}"
+GO_DOWNLOAD_BASE_URL="${GO_DOWNLOAD_BASE_URL:-"https://go.dev/dl/"}"
+GO_INSTALL_PATH="${GO_INSTALL_PATH:-"/usr/local/go"}"
+GO_EXTRACT_DIR="${GO_EXTRACT_DIR:-"/usr/local"}"
+GOPATH_DIR="${GOPATH_DIR:-"$HOME/go"}"
+
+# etcd Configuration Defaults
+ETCD_INSTALL_VERSION="${ETCD_INSTALL_VERSION:-"v3.5.9"}"
+ETCD_ARCH="${ETCD_ARCH:-"linux-amd64"}"
+ETCD_INSTALL_DIR="${ETCD_INSTALL_DIR:-"/usr/local/etcd"}"
+ETCD_DOWNLOAD_TEMP_DIR="${ETCD_DOWNLOAD_TEMP_DIR:-"/tmp/etcd-download"}"
+ETCD_DATA_DIR="${ETCD_DATA_DIR:-"/var/lib/etcd"}"
+ETCD_SERVICE_FILE_PATH="${ETCD_SERVICE_FILE_PATH:-"/etc/systemd/system/etcd.service"}"
+BIN_DIR="${BIN_DIR:-"/usr/local/bin"}" # Shared config
+
+# etcd Service Configuration Defaults
+ETCD_NODE_NAME="${ETCD_NODE_NAME:-"default"}"
+ETCD_INITIAL_ADVERTISE_PEER_URLS="${ETCD_INITIAL_ADVERTISE_PEER_URLS:-"http://localhost:2380"}"
+ETCD_LISTEN_PEER_URLS="${ETCD_LISTEN_PEER_URLS:-"http://localhost:2380"}"
+ETCD_ADVERTISE_CLIENT_URLS="${ETCD_ADVERTISE_CLIENT_URLS:-"http://localhost:2379"}"
+ETCD_LISTEN_CLIENT_URLS="${ETCD_LISTEN_CLIENT_URLS:-"http://localhost:2379"}"
+ETCD_INITIAL_CLUSTER="${ETCD_INITIAL_CLUSTER:-"default=http://localhost:2380"}"
+# --- End of Default Values ---
+
 
 echo "=== Starting Environment Setup ==="
 
