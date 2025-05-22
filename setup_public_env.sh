@@ -12,8 +12,8 @@ fi
 
 # --- Set Default Values (if not provided in config file) ---
 # Go Configuration Defaults
-REQUIRED_GO_VERSION="${REQUIRED_GO_VERSION:-"go1.23"}"
-GO_INSTALL_VERSION="${GO_INSTALL_VERSION:-"go1.23.7"}" 
+REQUIRED_GO_VERSION="${REQUIRED_GO_VERSION:-"1.23"}"
+GO_INSTALL_VERSION="${GO_INSTALL_VERSION:-"1.23.7"}" 
 GO_ARCH="${GO_ARCH:-"linux-amd64"}"
 GO_DOWNLOAD_BASE_URL="${GO_DOWNLOAD_BASE_URL:-"https://go.dev/dl/"}"
 GO_INSTALL_PATH="${GO_INSTALL_PATH:-"/usr/local/go"}"
