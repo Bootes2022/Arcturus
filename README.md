@@ -59,7 +59,7 @@
 
 ## 🚀 Quick Start Guide
 ```bash
-wget https://github.com/Lvpcgithub/Arcturus/archive/refs/heads/main.zip && \
+wget https://github.com/Bootes2022/Arcturus/archive/refs/heads/main.zip && \
 unzip main.zip && \
 mv Arcturus-main Arcturus && \
 rm main.zip
