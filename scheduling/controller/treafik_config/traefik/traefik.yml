@@ -1,0 +1,43 @@
+# traefik/traefik.yml
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+
+api:
+  insecure: true
+  dashboard: true
+
+log:
+  level: DEBUG
+  #filePath: "./traefik.log" # Log file will be generated in the traefik/ directory (if Traefik is started from the traefik/ directory)
+                           # Or provide an absolute path
+
+providers:
+  file:
+    # Traefik's working directory at startup is traefik/
+    # So ./conf.d points to traefik/conf.d/
+    directory: "./conf.d"
+    watch: true
+
+experimental:
+  localPlugins:
+    # This is the plugin's registration name, it will be used in the dynamic configuration
+    myWeightedRedirector: # You can customize this registration name
+      # moduleName should match the module name defined in go.mod
+      # And Traefik will look in the plugins-local/<moduleName> directory
+      # Since our module name (in go.mod) is "weightedredirectorplugin"
+      # And it is located in plugins-local/weightedredirector/
+      # So the moduleName here (in traefik.yml) should be "weightedredirector" (corresponding to the directory name)
+      # Or more accurately, if Traefik directly looks for plugins-local/<go.mod module name>,
+      # then it should be "weightedredirectorplugin"
+      # For Traefik v2.x, the path lookup for local plugins is usually plugins-local/<moduleName (from traefik.yml)>
+      # And <moduleName (from traefik.yml)> is usually the module value in go.mod.
+      # If go.mod is in plugins-local/X/go.mod, and its 'module' directive is Y,
+      # and 'moduleName' in traefik.yml is set to Y, Traefik will look for plugins-local/Y.
+      # The simplest way is to have the module name in go.mod and the directory name containing go.mod be the same.
+      moduleName: "weightedredirector" # <--- corresponds to the directory name under plugins-local/
+                                        # and this directory contains the go.mod and .go files
