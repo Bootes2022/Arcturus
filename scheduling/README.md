@@ -1,10 +1,8 @@
 # Scheduling
 
-The Arcturus Scheduling Plane serves as the **central configuration and coordination hub** for the entire acceleration system. It is the critical component that must be initialized first during system startup, as it manages global system configuration, node registration, and orchestrates the entire distributed acceleration infrastructure.
-
 ## Overview
 
-The **Scheduling Plane** is the brain of the Arcturus acceleration system. As the primary configuration center, it:
+The Arcturus Scheduling Plane serves as the **central configuration and coordination hub** for the entire acceleration system. It is the critical component that must be initialized first during system startup, as it manages global system configuration, node registration, and orchestrates the entire distributed acceleration infrastructure. The **Scheduling Plane** is the brain of the Arcturus acceleration system. As the primary configuration center, it:
 
 - **Initializes and registers** all proxy and controller nodes in the network
 - **Manages system-wide configuration** and policy distribution

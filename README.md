@@ -59,14 +59,31 @@
 
 ## 🚀 Quick Start Guide
 ```bash
-wget https://github.com/Lvpcgithub/Arcturus/archive/refs/heads/main.zip && \
+wget https://github.com/Bootes2022/Arcturus/archive/refs/heads/main.zip && \
 unzip main.zip && \
 mv Arcturus-main Arcturus && \
 rm main.zip
+
+cd /Arcturus
+
+# Add execute permissions to all scripts that need to be run (one-time operation)
+chmod +x setup_public_env.sh
+chmod +x forwarding/deploy_forwarding.sh
+chmod +x scheduling/deploy_scheduling.sh
+
+# Run common environment setup (e.g., Go, etcd)
+./setup_public_env.sh
+
+# If you want deploy forwarding, run forwarding-specific environment setup
+./forwarding/deploy_forwarding.sh
+
+# If you want deploy scheduling, run scheduling-specific environment setup
+./scheduling/deploy_scheduling.sh
+
 ```
 
-• [Scheduling ](./scheduling/README.md) - run scheduling plane                      
-• [Forwarding ](./forwarding/README.md) - run forwarding plane
+• [Scheduling ](./scheduling/README.md) - Details for the scheduling plane            
+• [Forwarding ](./forwarding/README.md) - Details for the forwarding plane
 
 ## License Agreement
 
