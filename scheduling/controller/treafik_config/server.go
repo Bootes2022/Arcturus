@@ -3,29 +3,36 @@ package traefik_config
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
-// RunServer starts the Traefik configuration API server
-func RunServer(port string) {
-	// Initialize the domain mappings storage
-	initStorage()
+func RunServer() {
+	// Initialize static configuration into memory
+	initializeStaticConfig()
 
-	addDomainMapping("example.com", []string{"1.92.150.161:50055"})
+	// Setup HTTP server
+	mux := http.NewServeMux()
+	mux.HandleFunc("/traefik-dynamic-config", traefikConfigHandler) // Endpoint polled by Traefik
 
-	// Set up only the necessary HTTP route
-	http.HandleFunc("/api/traefik/config", handleTraefikConfig)
+	port := os.Getenv("API_PORT")
+	if port == "" {
+		port = "8090" // Default port
+	}
+	listenAddr := ":" + port
 
-	// Configure the HTTP server
-	addr := ":" + port
 	server := &http.Server{
-		Addr:         addr,
-		ReadTimeout:  10 * time.Second,
+		Addr:         listenAddr,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  15 * time.Second,
 	}
 
-	// Start the server
-	log.Println("Starting Traefik config provider on", addr)
-	log.Println("Traefik config available at: http://localhost" + addr + "/api/traefik/config")
-	log.Fatal(server.ListenAndServe())
+	log.Printf("Starting API server with static in-memory config on %s", listenAddr)
+	log.Printf("Traefik should poll: http://<this-server-ip>:%s/traefik-dynamic-config", port)
+
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("ListenAndServe error: %v", err)
+	}
 }
