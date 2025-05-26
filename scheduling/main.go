@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"os/signal"
+	"scheduling/controller/heartbeats"
 	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/middleware"
 	"scheduling/models"
@@ -159,6 +161,6 @@ func main() {
 	// Add a small delay to allow background goroutines' logs to flush before main exits fully
 	time.Sleep(100 * time.Millisecond)
 	// run server
-	/*ctx := context.Background()
-	heartbeats.StartServer(ctx, db)*/
+	ctx := context.Background()
+	heartbeats.StartServer(ctx, db)
 }
