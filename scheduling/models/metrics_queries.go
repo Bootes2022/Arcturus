@@ -1,13 +1,13 @@
 package models
 
 import (
-	"control/config"
-	pb "control/controller/heartbeats/proto"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
+	"scheduling/config"
+	pb "scheduling/controller/heartbeats/proto"
 	"sort"
 	"time"
 

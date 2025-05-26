@@ -1,9 +1,9 @@
 package models
 
 import (
-	pb "control/controller/heartbeats/proto"
 	"database/sql"
 	"fmt"
+	pb "scheduling/controller/heartbeats/proto"
 	"time"
 )
 

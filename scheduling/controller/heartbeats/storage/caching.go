@@ -1,7 +1,7 @@
 package storage
 
 import (
-	pb "control/controller/heartbeats/proto"
+	pb "scheduling/controller/heartbeats/proto"
 	"sync"
 )
 

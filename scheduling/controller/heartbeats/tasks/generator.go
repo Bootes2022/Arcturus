@@ -2,11 +2,11 @@ package tasks
 
 import (
 	"context"
-	pb "control/controller/heartbeats/proto"
-	"control/controller/heartbeats/storage"
-	"control/models"
 	"database/sql"
 	"log"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/controller/heartbeats/storage"
+	"scheduling/models"
 	"sync"
 	"time"
 )

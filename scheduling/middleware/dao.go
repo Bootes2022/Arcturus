@@ -1,22 +1,16 @@
 package middleware
 
 import (
-	"control/config"
 	"database/sql"
-	"time"
-
-	"log"
-
 	"github.com/BurntSushi/toml"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gomodule/redigo/redis"
+	"log"
+	"scheduling/config"
+	"time"
 )
 
 // db
 var db *sql.DB
-
-// Redis
-var pool *redis.Pool
 
 // ConnectToDB
 func ConnectToDB() *sql.DB {
@@ -58,42 +52,9 @@ func CloseDB() {
 	}
 }
 
-func CreateRedisPool() *redis.Pool {
-	pool = &redis.Pool{
-		MaxIdle:     10,
-		MaxActive:   20,
-		IdleTimeout: 240 * time.Second,
-		Dial: func() (redis.Conn, error) {
-
-			c, err := redis.Dial("tcp", "localhost:6379")
-			if err != nil {
-				log.Fatalf("Failed to connect to Redis: %v", err)
-				return nil, err
-			}
-			return c, err
-		},
-	}
-	return pool
-}
-
-func GetRedisConn() redis.Conn {
-	return pool.Get()
-}
-
-func CloseRedisPool() {
-	if pool != nil {
-		err := pool.Close()
-		if err != nil {
-			log.Println("Error closing Redis connection pool:", err)
-		} else {
-			log.Println("Redis connection pool closed.")
-		}
-	}
-}
-
 func UseToml() config.ConfigInfo {
 	var c config.ConfigInfo
-	var path string = "control/config/conf.toml"
+	var path string = "D:\\goland_workspace\\Arcturus\\scheduling\\config\\conf.toml"
 	if _, err := toml.DecodeFile(path, &c); err != nil {
 		log.Fatal(err)
 

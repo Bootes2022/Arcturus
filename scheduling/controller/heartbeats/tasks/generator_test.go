@@ -2,12 +2,13 @@ package tasks
 
 import (
 	"context"
-	pb "control/controller/heartbeats/proto"
-	"control/controller/heartbeats/storage"
 	"database/sql"
+	"github.com/DATA-DOG/go-sqlmock"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/controller/heartbeats/storage"
 	"testing"
 	"time"
 

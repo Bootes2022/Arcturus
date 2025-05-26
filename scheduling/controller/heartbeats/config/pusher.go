@@ -3,14 +3,14 @@ package config
 
 import (
 	"context"
-	pb "control/controller/heartbeats/proto"
-	"control/controller/heartbeats/storage"
-	"control/controller/heartbeats/utils"
-	"control/pool"
 	"fmt"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"log"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/controller/heartbeats/storage"
+	"scheduling/controller/heartbeats/utils"
+	"scheduling/pool"
 	"sync"
 	"time"
 )
