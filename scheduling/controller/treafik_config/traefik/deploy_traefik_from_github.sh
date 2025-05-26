@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration Variables ---
-TRAEFIK_VERSION="v2.10.7" # Specify the Traefik version to download, or set to "latest"
+TRAEFIK_VERSION="v3.4.0" # Specify the Traefik version to download, or set to "latest"
 TRAEFIK_INSTALL_DIR="/opt/traefik"
 CONFIG_DIR="/etc/traefik"
 PLUGIN_DIR_NAME="weightedredirector"
