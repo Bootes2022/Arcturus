@@ -388,3 +388,48 @@ func GetMedianVirtual(db *sql.DB) (float64, float64, error) {
 
 	return medianMean, medianVariance, nil
 }
+
+// FetchAllNodeIPs retrieves all IP addresses from the node_region table.
+func FetchAllNodeIPs(db *sql.DB) ([]string, error) {
+	rows, err := db.Query("SELECT ip FROM node_region")
+	if err != nil {
+		return nil, fmt.Errorf("error querying node_region for IPs: %w", err)
+	}
+	defer rows.Close()
+
+	var ips []string
+	for rows.Next() {
+		var ip string
+		if err := rows.Scan(&ip); err != nil {
+			// Log individual scan errors but continue if possible
+			log.Printf("Warning: error scanning IP from node_region: %v", err)
+			continue
+		}
+		ips = append(ips, ip)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error during row iteration for node_region IPs: %w", err)
+	}
+
+	if len(ips) == 0 {
+		log.Println("No IPs found in node_region table.")
+	}
+
+	return ips, nil
+}
+
+// FetchFirstDomain retrieves the domain name of the first record from domain_origin table.
+func FetchFirstDomain(db *sql.DB) (string, error) {
+	var domain string
+	// Order by a column (e.g., created_at or domain itself) to get a consistent "first"
+	// If order doesn't matter, you can remove ORDER BY, but it's less predictable.
+	err := db.QueryRow("SELECT domain FROM domain_origin ORDER BY created_at LIMIT 1").Scan(&domain)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no domains found in domain_origin table")
+		}
+		return "", fmt.Errorf("error fetching first domain: %w", err)
+	}
+	return domain, nil
+}

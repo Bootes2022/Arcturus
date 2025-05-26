@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	_ "github.com/go-sql-driver/mysql"
 	"log"
+	"path/filepath"
 	"scheduling/config"
 	"time"
 )
@@ -13,13 +15,18 @@ import (
 var db *sql.DB
 
 // ConnectToDB
-func ConnectToDB() *sql.DB {
+func ConnectToDB(dbConfig config.DatabaseConfig) *sql.DB {
 
 	if db != nil {
 		return db
 	}
 
-	dsn := config.Mysqldb
+	// DSN: [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...¶mN=valueN]
+	dsn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local",
+		dbConfig.Username,
+		dbConfig.Password,
+		dbConfig.DBName,
+	)
 	var err error
 
 	db, err = sql.Open("mysql", dsn)
@@ -52,12 +59,20 @@ func CloseDB() {
 	}
 }
 
-func UseToml() config.ConfigInfo {
-	var c config.ConfigInfo
-	var path string = "D:\\goland_workspace\\Arcturus\\scheduling\\config\\conf.toml"
-	if _, err := toml.DecodeFile(path, &c); err != nil {
-		log.Fatal(err)
-
+// LoadConfig reads the TOML configuration file
+func LoadConfig() (*config.Config, error) {
+	filePath := "scheduling_config.toml"
+	var cfg config.Config
+	// Get absolute path for clearer error messages if file not found
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting absolute path for %s: %w", filePath, err)
 	}
-	return c
+
+	log.Printf("Attempting to load configuration from: %s", absPath)
+
+	if _, err := toml.DecodeFile(filePath, &cfg); err != nil {
+		return nil, fmt.Errorf("error decoding TOML file %s: %w", filePath, err)
+	}
+	return &cfg, nil
 }

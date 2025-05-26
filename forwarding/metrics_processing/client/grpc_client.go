@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	protocol2 "data/metrics_processing/protocol"
-	"data/metrics_processing/storage"
 	"fmt"
+	protocol2 "forwarding/metrics_processing/protocol"
+	"forwarding/metrics_processing/storage"
 	"google.golang.org/grpc"
 	"log"
 	"strings"
@@ -87,7 +87,6 @@ func (g *GrpcClient) SyncMetrics(ctx context.Context, metrics *protocol2.Metrics
 		domainIPMappingsHash = ""
 	}
 
-	//
 	req := &protocol2.SyncRequest{
 		Metrics:              metrics,
 		NodeListHash:         nodeListHash,

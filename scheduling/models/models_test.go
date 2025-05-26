@@ -7,8 +7,8 @@ import (
 )
 
 func TestQueryIp(t *testing.T) {
-
-	db := middleware.ConnectToDB()
+	cfg, _ := middleware.LoadConfig()
+	db := middleware.ConnectToDB(cfg.Database)
 	defer db.Close()
 	ips, _ := QueryIp(db)
 	fmt.Println("Query result:", ips)

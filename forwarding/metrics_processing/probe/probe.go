@@ -1,10 +1,10 @@
 package probe
 
 import (
-	"data/common"
-	"data/metrics_processing/protocol"
-	"data/metrics_processing/storage"
-	"data/scheduling_algorithms/k_shortest"
+	"forwarding/common"
+	"forwarding/metrics_processing/protocol"
+	"forwarding/metrics_processing/storage"
+	"forwarding/scheduling_algorithms/k_shortest"
 	"log"
 	"math"
 	"net"
@@ -16,11 +16,8 @@ import (
 var ProbeTimeout = 2 * time.Second
 
 func performTCPProbe(targetIP string) (int64, error) {
-
 	timeoutDuration := ProbeTimeout
-
 	startTime := time.Now()
-
 	conn, err := net.DialTimeout("tcp", targetIP+":50051", timeoutDuration)
 	if err != nil {
 		// -1

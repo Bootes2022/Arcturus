@@ -1,7 +1,7 @@
 package router
 
 import (
-	"data/scheduling_algorithms/k_shortest"
+	"forwarding/scheduling_algorithms/k_shortest"
 	"sync/atomic"
 )
 
