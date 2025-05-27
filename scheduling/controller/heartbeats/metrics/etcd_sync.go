@@ -2,14 +2,14 @@ package metrics
 
 import (
 	"context"
-	pb "control/controller/heartbeats/proto"
-	"control/controller/heartbeats/storage"
-	"control/models"
-	"control/pool"
 	"database/sql"
 	"fmt"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/controller/heartbeats/storage"
+	"scheduling/models"
+	"scheduling/pool"
 	"strings"
 	"sync"
 

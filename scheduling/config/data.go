@@ -1,19 +1,31 @@
 package config
 
-import "time"
+// Config holds the overall configuration structure mapping to conf.toml
+type Config struct {
+	Database      DatabaseConfig      `toml:"database"`
+	DomainOrigins []DomainOriginEntry `toml:"domain_origins"`
+	NodeRegions   []NodeRegionEntry   `toml:"node_regions"`
+}
 
-type ConfigInfo struct {
-	PoolNum        int
-	ReceivePort    string
-	DetectPort     string
-	DetectCycle    time.Duration // ns *time.Second
-	ExpireDuration time.Duration //redis
-	CalculateCycle time.Duration // redis
-	K              int
-	Theta          float64
-	Skip           int
-	EtcdEndpoints  []string //etcd
-	ControllerID   string   //ID
+// DatabaseConfig holds database connection parameters
+type DatabaseConfig struct {
+	Username string `toml:"username"`
+	Password string `toml:"password"`
+	DBName   string `toml:"dbname"`
+}
+
+// DomainOriginEntry maps to one [[domain_origins]] item in TOML
+type DomainOriginEntry struct {
+	Domain   string `toml:"domain"`
+	OriginIP string `toml:"origin_ip"`
+}
+
+// NodeRegionEntry maps to one [[node_regions]] item in TOML
+type NodeRegionEntry struct {
+	IP          string `toml:"ip"`
+	Region      string `toml:"region"`
+	Hostname    string `toml:"hostname,omitempty"`    // omitempty if the field might be missing in TOML
+	Description string `toml:"description,omitempty"` // omitempty if the field might be missing in TOML
 }
 
 type ProbeResult struct {

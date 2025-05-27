@@ -1,9 +1,9 @@
 package router
 
 import (
-	"data/metrics_processing/collector"
-	"data/metrics_processing/storage"
-	"data/scheduling_algorithms/k_shortest"
+	"forwarding/metrics_processing/collector"
+	"forwarding/metrics_processing/storage"
+	"forwarding/scheduling_algorithms/k_shortest"
 	"log"
 	"sync"
 )

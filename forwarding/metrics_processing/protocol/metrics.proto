@@ -4,9 +4,6 @@ package proto;
 
 option go_package = ".;protocol";
 
-
-
-
 message CPUInfo {
   int32 cores = 1;
   string model_name = 2;
@@ -71,7 +68,6 @@ message Metrics {
 
 message ProbeTask {
   string task_id = 1;
-
   string target_ip = 2;
   repeated string args = 3;
 
@@ -179,12 +175,9 @@ message FaultInfo {
   string fault_description = 4;
 }
 
-
 message ReportFaultRequest {
   FaultInfo fault_info = 1;
 }
-
-
 
 
 service MetricsService {

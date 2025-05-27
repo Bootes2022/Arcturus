@@ -1,7 +1,7 @@
 package forwarder
 
 import (
-	packet "data/packet_handler"
+	packet "forwarding/packet_handler"
 	"log"
 	"net/http"
 	"sync"

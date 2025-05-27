@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"data/packet_handler"
+	"forwarding/packet_handler"
 )
 
 type BufferConfig struct {

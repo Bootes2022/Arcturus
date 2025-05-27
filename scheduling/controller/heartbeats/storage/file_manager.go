@@ -1,11 +1,11 @@
 package storage
 
 import (
-	pb "control/controller/heartbeats/proto"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	pb "scheduling/controller/heartbeats/proto"
 )
 
 type FileManager struct {

@@ -2,14 +2,6 @@ package heartbeats
 
 import (
 	"context"
-	"control/controller/heartbeats/assessment"
-	cf "control/controller/heartbeats/config"
-	"control/controller/heartbeats/metrics"
-	pb "control/controller/heartbeats/proto"
-	"control/controller/heartbeats/storage"
-	"control/controller/heartbeats/tasks"
-	"control/controller/heartbeats/utils"
-	"control/middleware"
 	"database/sql"
 	"fmt"
 	"google.golang.org/grpc"
@@ -17,6 +9,14 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"scheduling/controller/heartbeats/assessment"
+	cf "scheduling/controller/heartbeats/config"
+	"scheduling/controller/heartbeats/metrics"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/controller/heartbeats/storage"
+	"scheduling/controller/heartbeats/tasks"
+	"scheduling/controller/heartbeats/utils"
+	"scheduling/middleware"
 	"syscall"
 	"time"
 )
@@ -28,12 +28,11 @@ type ServerConfig struct {
 }
 
 type HeartbeatServer struct {
-	config         ServerConfig
-	db             *sql.DB
-	grpcServer     *grpc.Server
-	fileManager    *storage.FileManager
-	metricsHandler *metrics.Handler
-
+	config          ServerConfig
+	db              *sql.DB
+	grpcServer      *grpc.Server
+	fileManager     *storage.FileManager
+	metricsHandler  *metrics.Handler
 	shutdownHandler utils.ShutdownHandler
 }
 
@@ -71,7 +70,6 @@ func NewHeartbeatServer(config ServerConfig, db *sql.DB) (*HeartbeatServer, erro
 		metricsHandler: metricsHandler,
 
 		shutdownHandler: utils.NewShutdownHandler(func() {
-
 			configPusher.Release()
 			utils.ReleasePoolResources()
 			middleware.CloseDB()
@@ -112,14 +110,14 @@ func (s *HeartbeatServer) Stop() {
 	s.shutdownHandler.ExecuteShutdown()
 }
 
-func StartServer(ctx context.Context) {
+func StartServer(ctx context.Context, db *sql.DB) {
 
-	db := middleware.ConnectToDB()
+	/*db := middleware.ConnectToDB()
 	if db == nil {
 		log.Fatal("")
-	}
+	}*/
 
-	dataDir := "/control/assets/"
+	dataDir := "../../assets/"
 
 	addr := "0.0.0.0:8080"
 

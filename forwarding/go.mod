@@ -1,4 +1,4 @@
-module data
+module forwarding
 
 go 1.23.0
 

@@ -1,31 +1,32 @@
 package middleware
 
 import (
-	"control/config"
 	"database/sql"
-	"time"
-
-	"log"
-
+	"fmt"
 	"github.com/BurntSushi/toml"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/gomodule/redigo/redis"
+	"log"
+	"path/filepath"
+	"scheduling/config"
+	"time"
 )
 
 // db
 var db *sql.DB
 
-// Redis
-var pool *redis.Pool
-
 // ConnectToDB
-func ConnectToDB() *sql.DB {
+func ConnectToDB(dbConfig config.DatabaseConfig) *sql.DB {
 
 	if db != nil {
 		return db
 	}
 
-	dsn := config.Mysqldb
+	// DSN: [username[:password]@][protocol[(address)]]/dbname[?param1=value1&...¶mN=valueN]
+	dsn := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s?charset=utf8&parseTime=True&loc=Local",
+		dbConfig.Username,
+		dbConfig.Password,
+		dbConfig.DBName,
+	)
 	var err error
 
 	db, err = sql.Open("mysql", dsn)
@@ -58,45 +59,19 @@ func CloseDB() {
 	}
 }
 
-func CreateRedisPool() *redis.Pool {
-	pool = &redis.Pool{
-		MaxIdle:     10,
-		MaxActive:   20,
-		IdleTimeout: 240 * time.Second,
-		Dial: func() (redis.Conn, error) {
-
-			c, err := redis.Dial("tcp", "localhost:6379")
-			if err != nil {
-				log.Fatalf("Failed to connect to Redis: %v", err)
-				return nil, err
-			}
-			return c, err
-		},
+// LoadConfig reads the TOML configuration file
+func LoadConfig(path string) (*config.Config, error) {
+	var cfg config.Config
+	// Get absolute path for clearer error messages if file not found
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("error getting absolute path for %s: %w", path, err)
 	}
-	return pool
-}
 
-func GetRedisConn() redis.Conn {
-	return pool.Get()
-}
+	log.Printf("Attempting to load configuration from: %s", absPath)
 
-func CloseRedisPool() {
-	if pool != nil {
-		err := pool.Close()
-		if err != nil {
-			log.Println("Error closing Redis connection pool:", err)
-		} else {
-			log.Println("Redis connection pool closed.")
-		}
+	if _, err := toml.DecodeFile(path, &cfg); err != nil {
+		return nil, fmt.Errorf("error decoding TOML file %s: %w", path, err)
 	}
-}
-
-func UseToml() config.ConfigInfo {
-	var c config.ConfigInfo
-	var path string = "control/config/conf.toml"
-	if _, err := toml.DecodeFile(path, &c); err != nil {
-		log.Fatal(err)
-
-	}
-	return c
+	return &cfg, nil
 }

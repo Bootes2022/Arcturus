@@ -1,9 +1,9 @@
 package assessment
 
 import (
-	pb "control/controller/heartbeats/proto"
-	"control/data_compression"
 	"log"
+	pb "scheduling/controller/heartbeats/proto"
+	"scheduling/data_compression"
 )
 
 type Analyzer struct{}

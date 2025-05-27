@@ -1,8 +1,8 @@
 package common
 
 import (
-	"data/scheduling_algorithms/k_shortest"
 	"fmt"
+	"forwarding/scheduling_algorithms/k_shortest"
 	"log"
 	"sync"
 )
