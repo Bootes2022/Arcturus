@@ -61,13 +61,13 @@ type WeightedRedirectorPluginConfig struct {
 	DefaultPort          int           `json:"defaultPort,omitempty"`
 	PermanentRedirect    bool          `json:"permanentRedirect,omitempty"`
 	PreservePathAndQuery bool          `json:"preservePathAndQuery,omitempty"`
-	Targets              []TargetEntry `json:"targets"`
+	Targets              []TargetEntry `json:"targets"` // Defines the target IPs and their weights
 }
 
 // TargetEntry Defines each target IP and its weight
 type TargetEntry struct {
-	IP     string `json:"ip"`
-	Weight int    `json:"weight"`
+	IP     string `json:"ip"`     // Target IP address
+	Weight int    `json:"weight"` // Corresponding weight
 }
 
 // --- Global Variables ---
@@ -75,13 +75,22 @@ var (
 	currentTraefikConfig *TraefikDynamicConfiguration
 	configLock           sync.RWMutex
 	// The name under which the plugin is registered in Traefik,
-	// must match experimental.localPlugins.<name> in traefik.yml
+	// must match experimental.localPlugins.<name> in traefik.yml.template
 	pluginRegistrationName = "myWeightedRedirector"
 )
 
-// initializeStaticConfig Hardcodes the configuration and loads it into memory
+// initializeStaticConfig initializes the configuration by calling GetDomainTargets
+// and loads it into memory.
 func initializeStaticConfig() {
-	log.Println("Initializing static configuration into memory...")
+	log.Println("Initializing dynamic configuration by calling GetDomainTargets...")
+
+	// --- Get target configuration for example.com ---
+	domainForExample := "example.com"
+	exampleTargets := GetDomainTargets(domainForExample)
+	if exampleTargets == nil {
+		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForExample)
+		exampleTargets = []TargetEntry{}
+	}
 
 	// Plugin-specific configuration for weighted-redirect-for-example
 	examplePluginSpecificConfig := WeightedRedirectorPluginConfig{
@@ -89,10 +98,15 @@ func initializeStaticConfig() {
 		DefaultPort:          50055,
 		PreservePathAndQuery: false,
 		PermanentRedirect:    false,
-		Targets: []TargetEntry{
-			{IP: "47.94.193.70", Weight: 70},
-			{IP: "1.92.150.161", Weight: 30},
-		},
+		Targets:              exampleTargets, // Use dynamically obtained Targets
+	}
+
+	// --- Get target configuration for test.com ---
+	domainForTest := "test.com"
+	testTargets := GetDomainTargets(domainForTest)
+	if testTargets == nil {
+		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForTest)
+		testTargets = []TargetEntry{}
 	}
 
 	// Plugin-specific configuration for weighted-redirect-for-test
@@ -101,10 +115,7 @@ func initializeStaticConfig() {
 		DefaultPort:          8080,
 		PreservePathAndQuery: false,
 		PermanentRedirect:    false,
-		Targets: []TargetEntry{
-			{IP: "10.0.1.10", Weight: 1},
-			{IP: "10.0.1.11", Weight: 2},
-		},
+		Targets:              testTargets, // Use dynamically obtained Targets
 	}
 
 	tdc := &TraefikDynamicConfiguration{
@@ -158,5 +169,5 @@ func initializeStaticConfig() {
 	currentTraefikConfig = tdc
 	configLock.Unlock()
 
-	log.Println("Static configuration initialized and loaded into memory.")
+	log.Println("Dynamic configuration initialized and loaded into memory.")
 }

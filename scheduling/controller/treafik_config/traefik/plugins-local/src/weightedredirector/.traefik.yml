@@ -1,4 +1,4 @@
-# plugins-local/src/weightedredirector/.traefik.yml
+# plugins-local/src/weightedredirector/.traefik.yml.template
 displayName: My Weighted Redirector
 type: middleware
 import: weightedredirector # This is your module name from go.mod

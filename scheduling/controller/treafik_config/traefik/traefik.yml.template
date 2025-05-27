@@ -1,0 +1,32 @@
+# traefik.yml.template
+
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+entryPoints:
+  web:
+    address: ":80"
+  traefik: # For API and Dashboard
+    address: ":8080"
+
+api:
+  dashboard: true
+  insecure: true # For testing only
+
+log:
+  level: DEBUG # Or INFO for production
+
+providers:
+  # file: 
+  #   directory: "/etc/traefik/conf.d"
+  #   watch: true
+  http:
+    endpoint: "http://__API_SERVER_IP_PLACEHOLDER__:8090/traefik-dynamic-config" 
+    pollInterval: "10s"
+    # pollTimeout: "5s"
+
+experimental:
+  localPlugins:
+    myWeightedRedirector:
+      moduleName: "weightedredirector"
