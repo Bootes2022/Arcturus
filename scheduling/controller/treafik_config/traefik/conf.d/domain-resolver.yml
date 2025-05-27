@@ -32,7 +32,7 @@ http:
     # Middleware instance: Provides weighted IP redirection for the "/resolve/example.com" path
     weighted-redirect-for-example:
       plugin:
-        myWeightedRedirector: # Reference the plugin name registered in traefik.yml
+        myWeightedRedirector: # Reference the plugin name registered in traefik.yml.template
           defaultScheme: "http"
           defaultPort: 50055
           # preservePathAndQuery: false # If false (default), redirects to http://<ip>:50055/

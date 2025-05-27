@@ -75,7 +75,7 @@ var (
 	currentTraefikConfig *TraefikDynamicConfiguration
 	configLock           sync.RWMutex
 	// The name under which the plugin is registered in Traefik,
-	// must match experimental.localPlugins.<name> in traefik.yml
+	// must match experimental.localPlugins.<name> in traefik.yml.template
 	pluginRegistrationName = "myWeightedRedirector"
 )
 

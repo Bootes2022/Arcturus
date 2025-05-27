@@ -1,18 +1,16 @@
 #!/bin/bash
 
 # --- Configuration Variables ---
-TRAEFIK_VERSION="v3.0.0" # 或者你之前使用的 v3.4.0，请确保这是你想要的版本
-TRAEFIK_INSTALL_DIR="/opt/traefik" # Traefik 二进制安装目录，也将是工作目录
-CONFIG_DIR="/etc/traefik"          # 存放 traefik.yml 和 conf.d/ 的目录
-PLUGIN_DIR_NAME="weightedredirector" # 你的插件目录名 (也是 moduleName)
+TRAEFIK_VERSION="v3.4.0"
+TRAEFIK_INSTALL_DIR="/opt/traefik"
+CONFIG_DIR="/etc/traefik"
+PLUGIN_DIR_NAME="weightedredirector"
 SERVICE_USER="traefikuser" # Optional
 
-# --- Source Paths based on your repository structure ---
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # Get the script's directory
-
-STATIC_CONFIG_FILE_SOURCE="${SCRIPT_DIR}/traefik.yml"
+# --- Source Paths (these remain relative to the script) ---
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+STATIC_CONFIG_TEMPLATE_SOURCE="${SCRIPT_DIR}/traefik.yml.template" # MODIFIED: Use a template file
 DYNAMIC_CONFIG_SOURCE_DIR="${SCRIPT_DIR}/conf.d"
-# 指向你仓库中 plugins-local 目录，实际插件代码在 plugins-local/src/plugin_name 下
 PLUGINS_REPO_ROOT_SOURCE_DIR="${SCRIPT_DIR}/plugins-local"
 
 # --- Functions ---
@@ -101,41 +99,51 @@ download_traefik() {
 # --- Main Logic ---
 check_root
 
+# MODIFIED: Get API server IP from command line argument
+API_SERVER_IP="$1"
+if [ -z "$API_SERVER_IP" ]; then
+    log_error "Usage: $0 <api_server_ip_address>"
+    # 或者你可以设置一个默认值，但不推荐用于IP地址
+    # API_SERVER_IP="127.0.0.1" # Example default
+    # log_info "API server IP not provided, using default: $API_SERVER_IP"
+fi
+log_info "Using API Server IP: $API_SERVER_IP"
+
 # 0. (Optional) Create user
 # create_user_if_not_exists "$SERVICE_USER"
 
 log_info "Starting Traefik deployment (from GitHub source)..."
 
 # 1. Create installation and config directories
+# ... (目录创建部分保持不变) ...
 log_info "Creating directories..."
 sudo mkdir -p "$TRAEFIK_INSTALL_DIR" || log_error "Failed to create directory '$TRAEFIK_INSTALL_DIR'."
 sudo mkdir -p "$CONFIG_DIR/conf.d" || log_error "Failed to create directory '$CONFIG_DIR/conf.d'."
-
-# MODIFIED: Create plugin directory structure including 'src' under TRAEFIK_INSTALL_DIR/plugins-local/
-# This matches the path Traefik seems to be looking for in the error log.
-# Destination will be /opt/traefik/plugins-local/src/weightedredirector/
 PLUGIN_DESTINATION_BASE_DIR="$TRAEFIK_INSTALL_DIR/plugins-local"
-PLUGIN_DESTINATION_DIR_WITH_SRC="$PLUGIN_DESTINATION_BASE_DIR/src/$PLUGIN_DIR_NAME"
-sudo mkdir -p "$PLUGIN_DESTINATION_DIR_WITH_SRC" || log_error "Failed to create destination plugin directory with src: $PLUGIN_DESTINATION_DIR_WITH_SRC"
+PLUGIN_DESTINATION_DIR_WITH_SRC="$PLUGIN_DESTINATION_BASE_DIR/src/$PLUGIN_DIR_NAME" # This was the problematic path for Traefik
+# Corrected destination for plugin files, directly under plugins-local/PLUGIN_NAME
+PLUGIN_CORRECT_DESTINATION_DIR="$TRAEFIK_INSTALL_DIR/plugins-local/$PLUGIN_DIR_NAME"
+sudo mkdir -p "$PLUGIN_CORRECT_DESTINATION_DIR" || log_error "Failed to create destination plugin directory: $PLUGIN_CORRECT_DESTINATION_DIR"
+
 
 # 2. Download and install Traefik binary
 download_traefik "$TRAEFIK_VERSION"
 
 # 3. Copy config files and plugins
+# ... (调试日志和文件存在性检查保持不变) ...
 log_info "--- DEBUG: Path Variables ---"
 log_info "SCRIPT_DIR:                   $SCRIPT_DIR"
-log_info "STATIC_CONFIG_FILE_SOURCE:    $STATIC_CONFIG_FILE_SOURCE"
+# log_info "STATIC_CONFIG_TEMPLATE_SOURCE: $STATIC_CONFIG_TEMPLATE_SOURCE" # We will process this
 log_info "DYNAMIC_CONFIG_SOURCE_DIR:    $DYNAMIC_CONFIG_SOURCE_DIR"
 log_info "PLUGINS_REPO_ROOT_SOURCE_DIR: $PLUGINS_REPO_ROOT_SOURCE_DIR"
 log_info "PLUGIN_DIR_NAME:              $PLUGIN_DIR_NAME"
-PLUGIN_CODE_SOURCE_DIR="$PLUGINS_REPO_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME" # Source is still .../plugins-local/src/weightedredirector
+PLUGIN_CODE_SOURCE_DIR="$PLUGINS_REPO_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME"
 log_info "PLUGIN_CODE_SOURCE_DIR:       $PLUGIN_CODE_SOURCE_DIR"
-log_info "PLUGIN_DESTINATION_DIR_WITH_SRC: $PLUGIN_DESTINATION_DIR_WITH_SRC" # New destination
+log_info "PLUGIN_CORRECT_DESTINATION_DIR: $PLUGIN_CORRECT_DESTINATION_DIR"
 log_info "--- END DEBUG: Path Variables ---"
 
-
-if [ ! -f "$STATIC_CONFIG_FILE_SOURCE" ]; then
-    log_error "Static config file ($STATIC_CONFIG_FILE_SOURCE) not found."
+if [ ! -f "$STATIC_CONFIG_TEMPLATE_SOURCE" ]; then # Check for template file
+    log_error "Static config template file ($STATIC_CONFIG_TEMPLATE_SOURCE) not found."
 fi
 if [ ! -d "$DYNAMIC_CONFIG_SOURCE_DIR" ]; then
     log_error "Dynamic config source directory ($DYNAMIC_CONFIG_SOURCE_DIR) not found."
@@ -144,19 +152,27 @@ if [ ! -d "$PLUGIN_CODE_SOURCE_DIR" ]; then
     log_error "Plugin source code directory ($PLUGIN_CODE_SOURCE_DIR) not found."
 fi
 
-log_info "Copying static config file from $STATIC_CONFIG_FILE_SOURCE to $CONFIG_DIR/traefik.yml..."
-sudo cp "$STATIC_CONFIG_FILE_SOURCE" "$CONFIG_DIR/traefik.yml" || log_error "Failed to copy traefik.yml."
+
+# MODIFIED: Process traefik.yml.template template and copy
+log_info "Processing and copying static config template from $STATIC_CONFIG_TEMPLATE_SOURCE to $CONFIG_DIR/traefik.yml..."
+# 使用 sed 替换模板中的占位符
+# 创建一个临时文件来处理，避免直接修改源模板
+TEMP_TRAEFIK_YML=$(mktemp)
+# shellcheck disable=SC2002
+cat "$STATIC_CONFIG_TEMPLATE_SOURCE" | sed "s|__API_SERVER_IP_PLACEHOLDER__|${API_SERVER_IP}|g" > "$TEMP_TRAEFIK_YML"
+sudo cp "$TEMP_TRAEFIK_YML" "$CONFIG_DIR/traefik.yml" || log_error "Failed to copy processed traefik.yml."
+rm "$TEMP_TRAEFIK_YML"
+
 
 log_info "Copying dynamic config files from $DYNAMIC_CONFIG_SOURCE_DIR/ to $CONFIG_DIR/conf.d/ ..."
 sudo cp "$DYNAMIC_CONFIG_SOURCE_DIR/"* "$CONFIG_DIR/conf.d/" || log_error "Failed to copy dynamic config files."
 
-# MODIFIED: Copy plugin files to the new destination directory that includes 'src'
-log_info "Copying plugin files from $PLUGIN_CODE_SOURCE_DIR/ to $PLUGIN_DESTINATION_DIR_WITH_SRC/"
+log_info "Copying plugin files from $PLUGIN_CODE_SOURCE_DIR/ to $PLUGIN_CORRECT_DESTINATION_DIR/"
 shopt -s dotglob
-if [ -d "$PLUGIN_CODE_SOURCE_DIR" ] && [ -d "$PLUGIN_DESTINATION_DIR_WITH_SRC" ]; then
-    sudo cp -rT "$PLUGIN_CODE_SOURCE_DIR" "$PLUGIN_DESTINATION_DIR_WITH_SRC" || log_error "Failed to copy plugin files (including hidden) to $PLUGIN_DESTINATION_DIR_WITH_SRC."
+if [ -d "$PLUGIN_CODE_SOURCE_DIR" ] && [ -d "$PLUGIN_CORRECT_DESTINATION_DIR" ]; then
+    sudo cp -rT "$PLUGIN_CODE_SOURCE_DIR" "$PLUGIN_CORRECT_DESTINATION_DIR" || log_error "Failed to copy plugin files (including hidden) to $PLUGIN_CORRECT_DESTINATION_DIR."
 else
-    log_error "Plugin source or destination directory does not exist or is not a directory. Source: $PLUGIN_CODE_SOURCE_DIR, Dest: $PLUGIN_DESTINATION_DIR_WITH_SRC"
+    log_error "Plugin source or destination directory does not exist or is not a directory. Source: $PLUGIN_CODE_SOURCE_DIR, Dest: $PLUGIN_CORRECT_DESTINATION_DIR"
 fi
 shopt -u dotglob
 
@@ -164,6 +180,7 @@ shopt -u dotglob
 # 4. (Optional) Set file permissions
 
 # 5. Create systemd service file
+# ... (systemd 文件生成部分保持不变，使用 ExecStart=/bin/sh -c 'cd ...') ...
 SYSTEMD_SERVICE_FILE="/etc/systemd/system/traefik.service"
 log_info "Creating systemd service file '$SYSTEMD_SERVICE_FILE'..."
 sudo bash -c "cat > $SYSTEMD_SERVICE_FILE" <<EOF
@@ -181,6 +198,7 @@ SyslogIdentifier=traefik
 [Install]
 WantedBy=multi-user.target
 EOF
+
 
 log_info "Reloading systemd and enabling/starting Traefik service..."
 sudo systemctl daemon-reload
