@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # --- Configuration Variables ---
-TRAEFIK_VERSION="v3.4.0"
-TRAEFIK_INSTALL_DIR="/opt/traefik"
-CONFIG_DIR="/etc/traefik"
-PLUGIN_DIR_NAME="weightedredirector" # 你的插件目录名
+TRAEFIK_VERSION="v3.0.0" # 或者你之前使用的 v3.4.0，请确保这是你想要的版本
+TRAEFIK_INSTALL_DIR="/opt/traefik" # Traefik 二进制安装目录，也将是工作目录
+CONFIG_DIR="/etc/traefik"          # 存放 traefik.yml 和 conf.d/ 的目录
+PLUGIN_DIR_NAME="weightedredirector" # 你的插件目录名 (也是 moduleName)
 SERVICE_USER="traefikuser" # Optional
 
 # --- Source Paths based on your repository structure ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # Get the script's directory
 
-# MODIFIED: Source paths now directly reflect your structure relative to SCRIPT_DIR
 STATIC_CONFIG_FILE_SOURCE="${SCRIPT_DIR}/traefik.yml"
 DYNAMIC_CONFIG_SOURCE_DIR="${SCRIPT_DIR}/conf.d"
-PLUGINS_ROOT_SOURCE_DIR="${SCRIPT_DIR}/plugins-local" # Points to your 'plugins-local' directory
+# 指向你仓库中 plugins-local 目录，实际插件代码在 plugins-local/src/plugin_name 下
+PLUGINS_REPO_ROOT_SOURCE_DIR="${SCRIPT_DIR}/plugins-local"
 
 # --- Functions ---
 log_info() {
@@ -110,40 +110,45 @@ log_info "Starting Traefik deployment (from GitHub source)..."
 log_info "Creating directories..."
 sudo mkdir -p "$TRAEFIK_INSTALL_DIR" || log_error "Failed to create directory '$TRAEFIK_INSTALL_DIR'."
 sudo mkdir -p "$CONFIG_DIR/conf.d" || log_error "Failed to create directory '$CONFIG_DIR/conf.d'."
-# Destination for plugins is still /etc/traefik/plugins-local/src/plugin_name
-sudo mkdir -p "$CONFIG_DIR/plugins-local/src/$PLUGIN_DIR_NAME" || log_error "Failed to create destination plugin directory."
+
+# MODIFIED: Create plugin directory under TRAEFIK_INSTALL_DIR (Traefik's working directory)
+# Traefik looks for plugins-local/MODULE_NAME/ relative to its working directory
+sudo mkdir -p "$TRAEFIK_INSTALL_DIR/plugins-local/$PLUGIN_DIR_NAME" || log_error "Failed to create destination plugin directory in Traefik working directory."
 
 # 2. Download and install Traefik binary
 download_traefik "$TRAEFIK_VERSION"
 
 # 3. Copy config files and plugins
-# MODIFIED: Check existence of new source paths
 if [ ! -f "$STATIC_CONFIG_FILE_SOURCE" ]; then
     log_error "Static config file ($STATIC_CONFIG_FILE_SOURCE) not found."
 fi
 if [ ! -d "$DYNAMIC_CONFIG_SOURCE_DIR" ]; then
     log_error "Dynamic config source directory ($DYNAMIC_CONFIG_SOURCE_DIR) not found."
 fi
-if [ ! -d "$PLUGINS_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME" ]; then # Check specific plugin source
-    log_error "Plugin source directory ($PLUGINS_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME) not found."
+# Source for plugin files is REPO_ROOT/plugins-local/src/PLUGIN_NAME/
+PLUGIN_CODE_SOURCE_DIR="$PLUGINS_REPO_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME"
+if [ ! -d "$PLUGIN_CODE_SOURCE_DIR" ]; then
+    log_error "Plugin source code directory ($PLUGIN_CODE_SOURCE_DIR) not found."
 fi
 
-# MODIFIED: Copy commands use the new source path variables
-log_info "Copying static config file from $STATIC_CONFIG_FILE_SOURCE..."
+log_info "Copying static config file from $STATIC_CONFIG_FILE_SOURCE to $CONFIG_DIR/traefik.yml..."
 sudo cp "$STATIC_CONFIG_FILE_SOURCE" "$CONFIG_DIR/traefik.yml" || log_error "Failed to copy traefik.yml."
 
-log_info "Copying dynamic config files from $DYNAMIC_CONFIG_SOURCE_DIR/ ..."
+log_info "Copying dynamic config files from $DYNAMIC_CONFIG_SOURCE_DIR/ to $CONFIG_DIR/conf.d/ ..."
 sudo cp "$DYNAMIC_CONFIG_SOURCE_DIR/"* "$CONFIG_DIR/conf.d/" || log_error "Failed to copy dynamic config files."
 
-log_info "Copying plugin files from $PLUGINS_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME/ ..."
-# Source is now $PLUGINS_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME/
-# Destination remains $CONFIG_DIR/plugins-local/src/$PLUGIN_DIR_NAME/ because that's where Traefik looks for them
-sudo cp -r "$PLUGINS_ROOT_SOURCE_DIR/src/$PLUGIN_DIR_NAME/"* "$CONFIG_DIR/plugins-local/src/$PLUGIN_DIR_NAME/" || log_error "Failed to copy plugin files."
+# MODIFIED: Copy plugin files to TRAEFIK_INSTALL_DIR/plugins-local/PLUGIN_DIR_NAME/
+PLUGIN_DESTINATION_DIR="$TRAEFIK_INSTALL_DIR/plugins-local/$PLUGIN_DIR_NAME"
+log_info "Copying plugin files from $PLUGIN_CODE_SOURCE_DIR/ to $PLUGIN_DESTINATION_DIR/"
+sudo cp -r "$PLUGIN_CODE_SOURCE_DIR/"* "$PLUGIN_DESTINATION_DIR/" || log_error "Failed to copy plugin files to Traefik working directory."
 
 
-# 4. (Optional) Set file permissions (same as previous)
+# 4. (Optional) Set file permissions
+# If you created a SERVICE_USER, you might want to set ownership for $TRAEFIK_INSTALL_DIR and $CONFIG_DIR
+# sudo chown -R "$SERVICE_USER":"$SERVICE_USER" "$TRAEFIK_INSTALL_DIR"
+# sudo chown -R "$SERVICE_USER":"$SERVICE_USER" "$CONFIG_DIR"
 
-# 5. Create systemd service file (same as previous script)
+# 5. Create systemd service file
 SYSTEMD_SERVICE_FILE="/etc/systemd/system/traefik.service"
 log_info "Creating systemd service file '$SYSTEMD_SERVICE_FILE'..."
 sudo bash -c "cat > $SYSTEMD_SERVICE_FILE" <<EOF
@@ -153,13 +158,14 @@ After=network.target
 
 [Service]
 ExecStart=$TRAEFIK_INSTALL_DIR/traefik --configFile=$CONFIG_DIR/traefik.yml
-WorkingDirectory=$TRAEFIK_INSTALL_DIR
+WorkingDirectory=$TRAEFIK_INSTALL_DIR # Traefik's working directory
 Restart=always
 # User=$SERVICE_USER
 # Group=$SERVICE_USER
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=traefik
+# Environment="TRAEFIK_LOG_LEVEL=DEBUG" # Example: Set log level via environment
 
 [Install]
 WantedBy=multi-user.target
