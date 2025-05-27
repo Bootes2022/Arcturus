@@ -18,11 +18,11 @@ log:
   level: DEBUG # Or INFO for production
 
 providers:
-  # file: # 如果你还想用 file provider 作为备用或初始配置
+  # file: 
   #   directory: "/etc/traefik/conf.d"
   #   watch: true
   http:
-    endpoint: "http://__API_SERVER_IP_PLACEHOLDER__:8090/traefik-dynamic-config" # <--- 占位符
+    endpoint: "http://__API_SERVER_IP_PLACEHOLDER__:8090/traefik-dynamic-config" 
     pollInterval: "10s"
     # pollTimeout: "5s"
 
@@ -30,5 +30,3 @@ experimental:
   localPlugins:
     myWeightedRedirector:
       moduleName: "weightedredirector"
-
-# ... 其他你需要的静态配置 ...
