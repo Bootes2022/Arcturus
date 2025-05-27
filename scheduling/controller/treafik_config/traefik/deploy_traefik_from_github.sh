@@ -9,12 +9,11 @@ SERVICE_USER="traefikuser" # Optional
 
 # --- Source Paths (these remain relative to the script) ---
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-STATIC_CONFIG_TEMPLATE_SOURCE="${SCRIPT_DIR}/traefik.yml.template" # MODIFIED: Use a template file
+STATIC_CONFIG_TEMPLATE_SOURCE="${SCRIPT_DIR}/traefik.yml.template"
 DYNAMIC_CONFIG_SOURCE_DIR="${SCRIPT_DIR}/conf.d"
 PLUGINS_REPO_ROOT_SOURCE_DIR="${SCRIPT_DIR}/plugins-local"
 
 # --- Functions ---
-# ... (log_info, log_error, check_root, create_user_if_not_exists, download_traefik 函数保持不变) ...
 log_info() {
     echo "[INFO] $1"
 }
@@ -96,16 +95,33 @@ download_traefik() {
     rm -rf "$TEMP_DOWNLOAD_DIR"
 }
 
+# Validate IP address format
+validate_ip() {
+    local ip=$1
+    local stat=1
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        OIFS=$IFS
+        IFS='.'
+        ip=($ip)
+        IFS=$OIFS
+        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
+        stat=$?
+    fi
+    return $stat
+}
+
 # --- Main Logic ---
 check_root
 
-# MODIFIED: Get API server IP from command line argument
+# Validate API_SERVER_IP parameter
 API_SERVER_IP="$1"
 if [ -z "$API_SERVER_IP" ]; then
     log_error "Usage: $0 <api_server_ip_address>"
-    # 或者你可以设置一个默认值，但不推荐用于IP地址
-    # API_SERVER_IP="127.0.0.1" # Example default
-    # log_info "API server IP not provided, using default: $API_SERVER_IP"
+fi
+
+if ! validate_ip "$API_SERVER_IP"; then
+    log_error "Invalid IP address format: $API_SERVER_IP"
 fi
 log_info "Using API Server IP: $API_SERVER_IP"
 
@@ -115,25 +131,21 @@ log_info "Using API Server IP: $API_SERVER_IP"
 log_info "Starting Traefik deployment (from GitHub source)..."
 
 # 1. Create installation and config directories
-# ... (目录创建部分保持不变) ...
 log_info "Creating directories..."
 sudo mkdir -p "$TRAEFIK_INSTALL_DIR" || log_error "Failed to create directory '$TRAEFIK_INSTALL_DIR'."
 sudo mkdir -p "$CONFIG_DIR/conf.d" || log_error "Failed to create directory '$CONFIG_DIR/conf.d'."
 PLUGIN_DESTINATION_BASE_DIR="$TRAEFIK_INSTALL_DIR/plugins-local"
-PLUGIN_DESTINATION_DIR_WITH_SRC="$PLUGIN_DESTINATION_BASE_DIR/src/$PLUGIN_DIR_NAME" # This was the problematic path for Traefik
-# Corrected destination for plugin files, directly under plugins-local/PLUGIN_NAME
+PLUGIN_DESTINATION_DIR_WITH_SRC="$PLUGIN_DESTINATION_BASE_DIR/src/$PLUGIN_DIR_NAME"
 PLUGIN_CORRECT_DESTINATION_DIR="$TRAEFIK_INSTALL_DIR/plugins-local/$PLUGIN_DIR_NAME"
 sudo mkdir -p "$PLUGIN_CORRECT_DESTINATION_DIR" || log_error "Failed to create destination plugin directory: $PLUGIN_CORRECT_DESTINATION_DIR"
-
 
 # 2. Download and install Traefik binary
 download_traefik "$TRAEFIK_VERSION"
 
 # 3. Copy config files and plugins
-# ... (调试日志和文件存在性检查保持不变) ...
 log_info "--- DEBUG: Path Variables ---"
 log_info "SCRIPT_DIR:                   $SCRIPT_DIR"
-# log_info "STATIC_CONFIG_TEMPLATE_SOURCE: $STATIC_CONFIG_TEMPLATE_SOURCE" # We will process this
+log_info "STATIC_CONFIG_TEMPLATE_SOURCE: $STATIC_CONFIG_TEMPLATE_SOURCE"
 log_info "DYNAMIC_CONFIG_SOURCE_DIR:    $DYNAMIC_CONFIG_SOURCE_DIR"
 log_info "PLUGINS_REPO_ROOT_SOURCE_DIR: $PLUGINS_REPO_ROOT_SOURCE_DIR"
 log_info "PLUGIN_DIR_NAME:              $PLUGIN_DIR_NAME"
@@ -142,7 +154,7 @@ log_info "PLUGIN_CODE_SOURCE_DIR:       $PLUGIN_CODE_SOURCE_DIR"
 log_info "PLUGIN_CORRECT_DESTINATION_DIR: $PLUGIN_CORRECT_DESTINATION_DIR"
 log_info "--- END DEBUG: Path Variables ---"
 
-if [ ! -f "$STATIC_CONFIG_TEMPLATE_SOURCE" ]; then # Check for template file
+if [ ! -f "$STATIC_CONFIG_TEMPLATE_SOURCE" ]; then
     log_error "Static config template file ($STATIC_CONFIG_TEMPLATE_SOURCE) not found."
 fi
 if [ ! -d "$DYNAMIC_CONFIG_SOURCE_DIR" ]; then
@@ -152,17 +164,18 @@ if [ ! -d "$PLUGIN_CODE_SOURCE_DIR" ]; then
     log_error "Plugin source code directory ($PLUGIN_CODE_SOURCE_DIR) not found."
 fi
 
-
-# MODIFIED: Process traefik.yml.template template and copy
+# Process traefik.yml.template template and copy
 log_info "Processing and copying static config template from $STATIC_CONFIG_TEMPLATE_SOURCE to $CONFIG_DIR/traefik.yml..."
-# 使用 sed 替换模板中的占位符
-# 创建一个临时文件来处理，避免直接修改源模板
 TEMP_TRAEFIK_YML=$(mktemp)
 # shellcheck disable=SC2002
 cat "$STATIC_CONFIG_TEMPLATE_SOURCE" | sed "s|__API_SERVER_IP_PLACEHOLDER__|${API_SERVER_IP}|g" > "$TEMP_TRAEFIK_YML"
 sudo cp "$TEMP_TRAEFIK_YML" "$CONFIG_DIR/traefik.yml" || log_error "Failed to copy processed traefik.yml."
 rm "$TEMP_TRAEFIK_YML"
 
+# Verify the processed config file contains the correct IP
+if ! grep -q "$API_SERVER_IP" "$CONFIG_DIR/traefik.yml"; then
+    log_error "API_SERVER_IP not found in processed traefik.yml. Please check the template file."
+fi
 
 log_info "Copying dynamic config files from $DYNAMIC_CONFIG_SOURCE_DIR/ to $CONFIG_DIR/conf.d/ ..."
 sudo cp "$DYNAMIC_CONFIG_SOURCE_DIR/"* "$CONFIG_DIR/conf.d/" || log_error "Failed to copy dynamic config files."
@@ -176,11 +189,13 @@ else
 fi
 shopt -u dotglob
 
-
-# 4. (Optional) Set file permissions
+# 4. Set file permissions
+log_info "Setting file permissions..."
+sudo chown -R root:root "$CONFIG_DIR"
+sudo chmod -R 644 "$CONFIG_DIR"/*
+sudo chmod -R 755 "$CONFIG_DIR/conf.d"
 
 # 5. Create systemd service file
-# ... (systemd 文件生成部分保持不变，使用 ExecStart=/bin/sh -c 'cd ...') ...
 SYSTEMD_SERVICE_FILE="/etc/systemd/system/traefik.service"
 log_info "Creating systemd service file '$SYSTEMD_SERVICE_FILE'..."
 sudo bash -c "cat > $SYSTEMD_SERVICE_FILE" <<EOF
@@ -189,8 +204,11 @@ Description=Traefik Ingress Controller
 After=network.target
 
 [Service]
-ExecStart=/bin/sh -c 'cd $TRAEFIK_INSTALL_DIR && $TRAEFIK_INSTALL_DIR/traefik --configFile=$CONFIG_DIR/traefik.yml'
+Type=simple
+ExecStart=$TRAEFIK_INSTALL_DIR/traefik --configFile=$CONFIG_DIR/traefik.yml
 Restart=always
+RestartSec=5
+LimitNOFILE=65536
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=traefik
@@ -199,14 +217,32 @@ SyslogIdentifier=traefik
 WantedBy=multi-user.target
 EOF
 
+# Verify systemd service file
+if ! grep -q "$TRAEFIK_INSTALL_DIR/traefik" "$SYSTEMD_SERVICE_FILE"; then
+    log_error "Traefik executable path not found in systemd service file. Please check."
+fi
 
 log_info "Reloading systemd and enabling/starting Traefik service..."
 sudo systemctl daemon-reload
 sudo systemctl enable traefik.service
+
+# Wait for service initialization before checking status
+log_info "Starting Traefik service and waiting for it to initialize..."
 sudo systemctl restart traefik.service
+sleep 5
 
+# Check service status
 log_info "Checking Traefik service status:"
-sudo systemctl status traefik.service --no-pager -l
+if ! sudo systemctl is-active --quiet traefik.service; then
+    log_error "Traefik service is not active. Checking logs:"
+    journalctl -u traefik.service -n 20 --no-pager
+fi
 
-log_info "Deployment completed!"
-echo "Please check Traefik logs (journalctl -u traefik -f) and Dashboard (if configured)."
+# Check if Traefik process is running as expected
+if ! pgrep -f "traefik --configFile=$CONFIG_DIR/traefik.yml" > /dev/null; then
+    log_error "Traefik process is not running as expected."
+fi
+
+log_info "Deployment completed successfully!"
+echo "Traefik is running and configured with API server IP: $API_SERVER_IP"
+echo "Check Traefik logs: journalctl -u traefik -f"
