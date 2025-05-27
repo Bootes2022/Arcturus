@@ -7,7 +7,7 @@ import (
 )
 
 func TestQueryIp(t *testing.T) {
-	cfg, _ := middleware.LoadConfig()
+	cfg, _ := middleware.LoadConfig("../scheduling_config.toml")
 	db := middleware.ConnectToDB(cfg.Database)
 	defer db.Close()
 	ips, _ := QueryIp(db)

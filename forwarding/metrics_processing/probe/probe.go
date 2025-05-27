@@ -20,8 +20,7 @@ func performTCPProbe(targetIP string) (int64, error) {
 	startTime := time.Now()
 	conn, err := net.DialTimeout("tcp", targetIP+":50051", timeoutDuration)
 	if err != nil {
-		// -1
-		return -1, nil // ，-1
+		return -1, nil
 	}
 	defer conn.Close()
 

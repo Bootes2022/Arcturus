@@ -167,3 +167,30 @@ func InsertNodeRegions(db *sql.DB, nodes []config.NodeRegionEntry) error {
 	}
 	return nil
 }
+
+func SaveOrUpdateDomainConfig(db *sql.DB, domainName string, totalReqIncrement int, redistributionProportion float64) error {
+	// SQL statement for INSERT ... ON DUPLICATE KEY UPDATE
+	// This is the MySQL way of performing an "UPSERT"
+	query := `
+        INSERT INTO domain_config (domain_name, total_req_increment, redistribution_proportion) 
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            total_req_increment = VALUES(total_req_increment),
+            redistribution_proportion = VALUES(redistribution_proportion);
+    `
+	// VALUES(column_name) in the ON DUPLICATE KEY UPDATE clause refers to the value
+	// that would have been inserted if there was no duplicate.
+
+	stmt, err := db.Prepare(query)
+	if err != nil {
+		return fmt.Errorf("failed to prepare domain config upsert statement: %w", err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(domainName, totalReqIncrement, redistributionProportion)
+	if err != nil {
+		return fmt.Errorf("failed to execute domain config upsert for domain %s: %w", domainName, err)
+	}
+	log.Printf("Configuration for domain '%s' successfully saved/updated.\n", domainName)
+	return nil
+}

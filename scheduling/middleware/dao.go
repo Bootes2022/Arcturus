@@ -60,19 +60,18 @@ func CloseDB() {
 }
 
 // LoadConfig reads the TOML configuration file
-func LoadConfig() (*config.Config, error) {
-	filePath := "scheduling_config.toml"
+func LoadConfig(path string) (*config.Config, error) {
 	var cfg config.Config
 	// Get absolute path for clearer error messages if file not found
-	absPath, err := filepath.Abs(filePath)
+	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return nil, fmt.Errorf("error getting absolute path for %s: %w", filePath, err)
+		return nil, fmt.Errorf("error getting absolute path for %s: %w", path, err)
 	}
 
 	log.Printf("Attempting to load configuration from: %s", absPath)
 
-	if _, err := toml.DecodeFile(filePath, &cfg); err != nil {
-		return nil, fmt.Errorf("error decoding TOML file %s: %w", filePath, err)
+	if _, err := toml.DecodeFile(path, &cfg); err != nil {
+		return nil, fmt.Errorf("error decoding TOML file %s: %w", path, err)
 	}
 	return &cfg, nil
 }

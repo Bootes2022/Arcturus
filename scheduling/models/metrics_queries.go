@@ -14,6 +14,14 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+// NodeSystemInfo struct is used to store the results queried from the database
+type NodeSystemInfo struct {
+	IP        string    `json:"ip"`        // IP Address
+	CPUCores  int       `json:"cpu_cores"` // Number of CPU Cores
+	CPUUsage  float64   `json:"cpu_usage"` // CPU Usage percentage
+	Timestamp time.Time `json:"timestamp"` // Timestamp of the record
+}
+
 func QueryIp(db *sql.DB) ([]string, error) {
 	rows, err := db.Query("SELECT DISTINCT ip FROM node_region")
 	if err != nil {
@@ -389,47 +397,102 @@ func GetMedianVirtual(db *sql.DB) (float64, float64, error) {
 	return medianMean, medianVariance, nil
 }
 
-// FetchAllNodeIPs retrieves all IP addresses from the node_region table.
-func FetchAllNodeIPs(db *sql.DB) ([]string, error) {
-	rows, err := db.Query("SELECT ip FROM node_region")
+// GetLatestSystemInfoByRegion method queries the latest node system information for a given region.
+// It no longer fetches the region itself in the result struct.
+func GetLatestNodeInfoByRegion(db *sql.DB, region string) ([]NodeSystemInfo, error) {
+	// SQL query to get the latest system info for IPs within a specific region.
+	// The 'nr.region' column is removed from the SELECT list.
+	query := `
+        WITH RankedSystemInfo AS (
+            SELECT
+                ip,
+                cpu_cores,
+                cpu_usage,
+                timestamp, -- Ensure the timestamp column in system_info is DATETIME or TIMESTAMP type
+                ROW_NUMBER() OVER (PARTITION BY ip ORDER BY timestamp DESC) as rn
+            FROM
+                system_info
+        )
+        SELECT
+            rsi.ip,
+            rsi.cpu_cores,
+            rsi.cpu_usage,
+            rsi.timestamp
+        FROM
+            node_region nr
+        INNER JOIN
+            RankedSystemInfo rsi ON nr.ip = rsi.ip
+        WHERE
+            nr.region = ? 
+            AND rsi.rn = 1;
+    `
+
+	rows, err := db.Query(query, region)
 	if err != nil {
-		return nil, fmt.Errorf("error querying node_region for IPs: %w", err)
+		return nil, fmt.Errorf("error querying latest system info by region '%s': %w", region, err)
 	}
 	defer rows.Close()
 
-	var ips []string
+	var results []NodeSystemInfo
 	for rows.Next() {
-		var ip string
-		if err := rows.Scan(&ip); err != nil {
-			// Log individual scan errors but continue if possible
-			log.Printf("Warning: error scanning IP from node_region: %v", err)
-			continue
+		var info NodeSystemInfo
+		// Note: The order of Scan arguments must exactly match the order of columns in the SELECT statement
+		err := rows.Scan(
+			&info.IP,
+			&info.CPUCores,
+			&info.CPUUsage,
+			&info.Timestamp, // MySQL DATETIME/TIMESTAMP can be directly scanned into time.Time
+		)
+		if err != nil {
+			// Consider whether to log the error and continue, or return the error immediately.
+			// Here, returning the error immediately is chosen.
+			return nil, fmt.Errorf("error scanning row for region '%s': %w", region, err)
 		}
-		ips = append(ips, ip)
+		results = append(results, info)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error during row iteration for node_region IPs: %w", err)
+	// Check for errors that occurred during rows iteration
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating rows for region '%s': %w", region, err)
 	}
 
-	if len(ips) == 0 {
-		log.Println("No IPs found in node_region table.")
+	if len(results) == 0 {
+		// Optionally, you can return a specific error type or (nil, nil) to indicate no records found.
+		// fmt.Printf("No records found for region: %s\n", region) // Example log message
 	}
-
-	return ips, nil
+	return results, nil
 }
 
-// FetchFirstDomain retrieves the domain name of the first record from domain_origin table.
-func FetchFirstDomain(db *sql.DB) (string, error) {
-	var domain string
-	// Order by a column (e.g., created_at or domain itself) to get a consistent "first"
-	// If order doesn't matter, you can remove ORDER BY, but it's less predictable.
-	err := db.QueryRow("SELECT domain FROM domain_origin ORDER BY created_at LIMIT 1").Scan(&domain)
+// GetDomainConfig method queries the domain config
+func GetDomainConfigValues(db *sql.DB, domainName string) (int, float64, error) {
+	query := `
+        SELECT
+            total_req_increment,
+            redistribution_proportion
+        FROM
+            domain_config
+        WHERE
+            domain_name = ?;
+    `
+
+	var totalReqIncrement int
+	var redistributionProportion float64
+
+	// db.QueryRow is used because we expect at most one row (due to UNIQUE constraint on domain_name)
+	err := db.QueryRow(query, domainName).Scan(
+		&totalReqIncrement,
+		&redistributionProportion,
+	)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("no domains found in domain_origin table")
+			// Domain not found in the table. Return zero values for the params and the error.
+			return 0, 0.0, fmt.Errorf("domain '%s' not found in domain_config: %w", domainName, err)
 		}
-		return "", fmt.Errorf("error fetching first domain: %w", err)
+		// Some other error occurred during query or scan. Return zero values and the error.
+		return 0, 0.0, fmt.Errorf("error querying domain_config for domain '%s': %w", domainName, err)
 	}
-	return domain, nil
+
+	// Successfully fetched the values
+	return totalReqIncrement, redistributionProportion, nil
 }
