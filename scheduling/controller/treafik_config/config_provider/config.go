@@ -1,82 +1,7 @@
-package traefik_config
+package config_provider
 
 import (
 	"log"
-	"sync"
-)
-
-// --- Traefik Dynamic Configuration Structure Definitions ---
-// (These structures are exactly the same as previously discussed)
-
-// TraefikDynamicConfiguration The top-level structure expected by Traefik
-type TraefikDynamicConfiguration struct {
-	HTTP *HTTPConfiguration `json:"http,omitempty"` // omitempty: do not output if HTTP is nil
-}
-
-// HTTPConfiguration Traefik HTTP configuration
-type HTTPConfiguration struct {
-	Routers     map[string]Router     `json:"routers"`
-	Middlewares map[string]Middleware `json:"middlewares"`
-	Services    map[string]Service    `json:"services"`
-}
-
-// Router Traefik router definition
-type Router struct {
-	Rule        string   `json:"rule"`
-	Service     string   `json:"service"`
-	EntryPoints []string `json:"entryPoints"`
-	Middlewares []string `json:"middlewares,omitempty"`
-}
-
-// PluginMiddlewareConfig is the generic structure for plugin configurations,
-// where the key is the plugin registration name
-type PluginMiddlewareConfig map[string]interface{}
-
-// Middleware Traefik middleware definition
-type Middleware struct {
-	Plugin PluginMiddlewareConfig `json:"plugin,omitempty"`
-}
-
-// Service Traefik service definition (noop-service)
-type Service struct {
-	LoadBalancer LoadBalancer `json:"loadBalancer"`
-}
-
-// LoadBalancer Traefik load balancer definition
-type LoadBalancer struct {
-	Servers []Server `json:"servers"`
-}
-
-// Server Traefik backend server definition
-type Server struct {
-	URL string `json:"url"`
-}
-
-// --- Custom Plugin Configuration Structure (myWeightedRedirector) ---
-// (These structures are consistent with your plugin definition)
-
-// WeightedRedirectorPluginConfig Corresponds to the configuration of the myWeightedRedirector plugin
-type WeightedRedirectorPluginConfig struct {
-	DefaultScheme        string        `json:"defaultScheme,omitempty"`
-	DefaultPort          int           `json:"defaultPort,omitempty"`
-	PermanentRedirect    bool          `json:"permanentRedirect,omitempty"`
-	PreservePathAndQuery bool          `json:"preservePathAndQuery,omitempty"`
-	Targets              []TargetEntry `json:"targets"` // Defines the target IPs and their weights
-}
-
-// TargetEntry Defines each target IP and its weight
-type TargetEntry struct {
-	IP     string `json:"ip"`     // Target IP address
-	Weight int    `json:"weight"` // Corresponding weight
-}
-
-// --- Global Variables ---
-var (
-	currentTraefikConfig *TraefikDynamicConfiguration
-	configLock           sync.RWMutex
-	// The name under which the plugin is registered in Traefik,
-	// must match experimental.localPlugins.<name> in traefik.yml.template
-	pluginRegistrationName = "myWeightedRedirector"
 )
 
 // initializeStaticConfig initializes the configuration by calling GetDomainTargets
@@ -86,10 +11,10 @@ func initializeStaticConfig() {
 
 	// --- Get target configuration for example.com ---
 	domainForExample := "example.com"
-	exampleTargets := GetDomainTargets(domainForExample)
-	if exampleTargets == nil {
-		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForExample)
-		exampleTargets = []TargetEntry{}
+	exampleTargets := GetDomainTargets(domainForExample) // Now returns empty slice instead of nil
+	if len(exampleTargets) == 0 {                        // Check for empty slice
+		log.Printf("Warning: Domain '%s' has no valid targets from BPR data. Using an empty target list for its Traefik config.", domainForExample)
+		// exampleTargets is already an empty slice, no need to re-assign: exampleTargets = []TargetEntry{}
 	}
 
 	// Plugin-specific configuration for weighted-redirect-for-example
@@ -103,10 +28,10 @@ func initializeStaticConfig() {
 
 	// --- Get target configuration for test.com ---
 	domainForTest := "test.com"
-	testTargets := GetDomainTargets(domainForTest)
-	if testTargets == nil {
-		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForTest)
-		testTargets = []TargetEntry{}
+	testTargets := GetDomainTargets(domainForTest) // Now returns empty slice instead of nil
+	if len(testTargets) == 0 {                     // Check for empty slice
+		log.Printf("Warning: Domain '%s' has no valid targets from BPR data. Using an empty target list for its Traefik config.", domainForTest)
+		// testTargets is already an empty slice
 	}
 
 	// Plugin-specific configuration for weighted-redirect-for-test
@@ -118,6 +43,7 @@ func initializeStaticConfig() {
 		Targets:              testTargets, // Use dynamically obtained Targets
 	}
 
+	// ... (rest of the tdc configuration, Routers, Middlewares, Services setup remains the same)
 	tdc := &TraefikDynamicConfiguration{
 		HTTP: &HTTPConfiguration{
 			Routers:     make(map[string]Router),
