@@ -5,13 +5,6 @@ import (
 	"sync/atomic"
 )
 
-const (
-	addPath      int = 2
-	maxIteration int = 3
-	hopThreshold int = 3
-	theta        int = 2
-)
-
 type WeightedRoundRobin struct {
 	paths       []k_shortest.PathWithIP
 	cumulative  []int

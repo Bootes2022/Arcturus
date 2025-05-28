@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
-	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/models"
-	"time"
 )
 
 // Constants for CPU-request relationship
@@ -490,7 +488,7 @@ func Bpr(db *sql.DB, region string, totalReqIncrement int, redistributionProport
 
 	bprNodes := make([]*Node, len(dbNodes))
 	for i, dbNode := range dbNodes {
-		currentQueueBacklog := lms.GetNodeQueueBacklog(dbNode.IP)
+		currentQueueBacklog := GetNodeQueueBacklog(dbNode.IP)
 		currentOnsetReq := 0
 		bprNodes[i] = &Node{
 			id:           i,
@@ -524,38 +522,9 @@ func Bpr(db *sql.DB, region string, totalReqIncrement int, redistributionProport
 			updatedNode.ip, updatedNode.reqRate, updatedNode.cpuUsage, updatedNode.queueBacklog, updatedNode.dppValue)
 
 		// Update persistent QueueBacklog for this node
-		lms.UpdateNodeQueueBacklog(updatedNode.ip, updatedNode.queueBacklog)
+		UpdateNodeQueueBacklog(updatedNode.ip, updatedNode.queueBacklog)
 	}
 
 	log.Printf("BPR process for region %s completed.", region)
 	return finalDistribution, nil
-}
-
-// ScheduleBPRRuns to call Bpr periodically
-func ScheduleBPRRuns(db *sql.DB, interval time.Duration, domainName string, region string) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop() // Ensure the ticker is stopped when the function exits
-	totalReqIncrement, redistributionProportion, err := models.GetDomainConfigValues(db, domainName)
-	// Optional: run once immediately at startup if desired
-	log.Printf("Performing initial BPR run for region '%s'...", region)
-	_, err = Bpr(db, region, totalReqIncrement, redistributionProportion) // Use your actual Bpr function
-	if err != nil {
-		// It's important to log the error from Bpr, but decide if it should stop the ticker
-		log.Printf("Error during initial BPR run for region '%s': %v", region, err)
-	}
-	log.Printf("Initial BPR run for region '%s' completed.", region)
-
-	for {
-		select {
-		case <-ticker.C:
-			log.Printf("Ticker triggered: Starting BPR run for region '%s'...", region)
-			//distribution
-			_, err := Bpr(db, region, totalReqIncrement, redistributionProportion)
-			if err != nil {
-				log.Printf("Error during scheduled BPR run for region '%s': %v", region, err)
-			}
-			log.Printf("Scheduled BPR run for region '%s' completed.", region)
-
-		}
-	}
 }
