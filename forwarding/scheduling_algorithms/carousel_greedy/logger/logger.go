@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"carousel-greedy/graph"
+	"data/scheduling_algorithms/carousel_greedy/graph"
 	"fmt"
 	"strings"
 )

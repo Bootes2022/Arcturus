@@ -1,7 +1,9 @@
 package traefik_config
 
 import (
+	"control/controller/last_mile_scheduling/bpr"
 	"log"
+	"strings"
 	"sync"
 )
 
@@ -82,41 +84,9 @@ var (
 // initializeStaticConfig initializes the configuration by calling GetDomainTargets
 // and loads it into memory.
 func initializeStaticConfig() {
-	log.Println("Initializing dynamic configuration by calling GetDomainTargets...")
+	log.Println("Dynamically initializing Traefik configuration based on BPR results...")
 
-	// --- Get target configuration for example.com ---
-	domainForExample := "example.com"
-	exampleTargets := GetDomainTargets(domainForExample)
-	if exampleTargets == nil {
-		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForExample)
-		exampleTargets = []TargetEntry{}
-	}
-
-	// Plugin-specific configuration for weighted-redirect-for-example
-	examplePluginSpecificConfig := WeightedRedirectorPluginConfig{
-		DefaultScheme:        "http",
-		DefaultPort:          50055,
-		PreservePathAndQuery: false,
-		PermanentRedirect:    false,
-		Targets:              exampleTargets, // Use dynamically obtained Targets
-	}
-
-	// --- Get target configuration for test.com ---
-	domainForTest := "test.com"
-	testTargets := GetDomainTargets(domainForTest)
-	if testTargets == nil {
-		log.Printf("Warning: Domain '%s' not found in domainTargetsMap. Using an empty target list.", domainForTest)
-		testTargets = []TargetEntry{}
-	}
-
-	// Plugin-specific configuration for weighted-redirect-for-test
-	testPluginSpecificConfig := WeightedRedirectorPluginConfig{
-		DefaultScheme:        "http",
-		DefaultPort:          8080,
-		PreservePathAndQuery: false,
-		PermanentRedirect:    false,
-		Targets:              testTargets, // Use dynamically obtained Targets
-	}
+	allBprData := bpr.GetAllBPRResults() // Get all current BPR results
 
 	tdc := &TraefikDynamicConfiguration{
 		HTTP: &HTTPConfiguration{
@@ -126,48 +96,52 @@ func initializeStaticConfig() {
 		},
 	}
 
-	// Add the fixed noop-service
-	tdc.HTTP.Services["noop-service"] = Service{
-		LoadBalancer: LoadBalancer{
-			Servers: []Server{{URL: "http://127.0.0.1:1"}}, // Invalid address, will not be called
-		},
+	hasActiveRouters := false // Flag indicating whether at least one router was created
+
+	for domain, _ := range allBprData {
+		targets := GetDomainTargets(domain) // GetDomainTargets internally retrieves from allBprData again (could be optimized)
+
+		if len(targets) > 0 { // Only create configuration if domain has valid targets
+			hasActiveRouters = true
+			safeDomainNamePart := strings.ReplaceAll(domain, ".", "-") // Create safe name component
+			routerName := "router-resolve-" + safeDomainNamePart
+			middlewareName := "weighted-redirect-" + safeDomainNamePart
+			rule := "Path(`/resolve/" + domain + "`)" // Dynamically generate rule
+
+			pluginSpecificConfig := WeightedRedirectorPluginConfig{
+				DefaultScheme: "http", // These could be defaults or read from more general configuration
+				DefaultPort:   50055,  // These could be defaults or read from more general configuration
+				Targets:       targets,
+			}
+
+			tdc.HTTP.Routers[routerName] = Router{
+				Rule:        rule,
+				Service:     "noop-service",
+				EntryPoints: []string{"web"},
+				Middlewares: []string{middlewareName},
+			}
+			tdc.HTTP.Middlewares[middlewareName] = Middleware{
+				Plugin: PluginMiddlewareConfig{
+					pluginRegistrationName: pluginSpecificConfig,
+				},
+			}
+		} else {
+			log.Printf("initializeStaticConfig: No valid targets for domain '%s' from BPR results. Skipping Traefik config for it.", domain)
+		}
 	}
 
-	// --- Configure /resolve/example.com ---
-	routerNameExample := "router-for-example-path"
-	middlewareNameExample := "weighted-redirect-for-example"
-
-	tdc.HTTP.Routers[routerNameExample] = Router{
-		Rule:        "Path(`/resolve/example.com`)",
-		Service:     "noop-service",
-		EntryPoints: []string{"web"},
-		Middlewares: []string{middlewareNameExample},
-	}
-	tdc.HTTP.Middlewares[middlewareNameExample] = Middleware{
-		Plugin: PluginMiddlewareConfig{
-			pluginRegistrationName: examplePluginSpecificConfig,
-		},
-	}
-
-	// --- Configure /resolve/test.com ---
-	routerNameTest := "router-for-test-path"
-	middlewareNameTest := "weighted-redirect-for-test"
-
-	tdc.HTTP.Routers[routerNameTest] = Router{
-		Rule:        "Path(`/resolve/test.com`)",
-		Service:     "noop-service",
-		EntryPoints: []string{"web"},
-		Middlewares: []string{middlewareNameTest},
-	}
-	tdc.HTTP.Middlewares[middlewareNameTest] = Middleware{
-		Plugin: PluginMiddlewareConfig{
-			pluginRegistrationName: testPluginSpecificConfig,
-		},
+	// Only add noop-service if at least one router was created
+	if hasActiveRouters {
+		tdc.HTTP.Services["noop-service"] = Service{
+			LoadBalancer: LoadBalancer{
+				Servers: []Server{{URL: "http://127.0.0.1:1"}},
+			},
+		}
 	}
 
 	configLock.Lock()
 	currentTraefikConfig = tdc
 	configLock.Unlock()
 
-	log.Println("Dynamic configuration initialized and loaded into memory.")
+	log.Println("Dynamic configuration initialized/updated and loaded into memory.")
 }
