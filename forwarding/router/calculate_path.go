@@ -1,15 +1,8 @@
 package router
 
 import (
-	"data/scheduling_algorithms/k_shortest"
+	"forwarding/scheduling_algorithms/k_shortest"
 	"sync/atomic"
-)
-
-const (
-	addPath      int = 2
-	maxIteration int = 3
-	hopThreshold int = 3
-	theta        int = 2
 )
 
 type WeightedRoundRobin struct {

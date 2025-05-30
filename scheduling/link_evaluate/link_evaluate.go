@@ -1,8 +1,8 @@
 package linkevaluate
 
 import (
-	"control/config"
 	"math"
+	"scheduling/config"
 )
 
 type Evaluation struct {

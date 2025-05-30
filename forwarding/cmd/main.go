@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"data/forwarder"
-	"data/metrics_processing"
-	"data/router"
 	"flag"
 	"fmt"
+	"forwarding/forwarder"
+	"forwarding/metrics_processing"
+	"forwarding/router"
 	"log"
 	"net"
 	"os"

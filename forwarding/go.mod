@@ -1,11 +1,10 @@
-module data
+module forwarding
 
 go 1.23.0
 
 toolchain go1.23.7
 
 require (
-	github.com/BurntSushi/toml v1.5.0
 	github.com/panjf2000/ants/v2 v2.11.2
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/xtaci/smux v1.5.34

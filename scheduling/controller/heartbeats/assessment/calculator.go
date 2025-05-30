@@ -2,15 +2,15 @@ package assessment
 
 import (
 	"context"
-	"control/config"
-	pb "control/controller/heartbeats/proto"
-	linkevaluate "control/link_evaluate"
-	"control/models"
-	"control/pool"
 	"database/sql"
 	"fmt"
 	"log"
 	"runtime"
+	"scheduling/config"
+	pb "scheduling/controller/heartbeats/proto"
+	linkevaluate "scheduling/link_evaluate"
+	"scheduling/models"
+	"scheduling/pool"
 	"sync"
 	"time"
 )

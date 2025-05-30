@@ -1,18 +1,14 @@
 package models
 
 import (
-	"control/config"
-	"control/middleware"
-	"encoding/json"
 	"fmt"
-	"log"
+	"scheduling/middleware"
 	"testing"
-	"time"
 )
 
 func TestQueryIp(t *testing.T) {
-
-	db := middleware.ConnectToDB()
+	cfg, _ := middleware.LoadConfig("../scheduling_config.toml")
+	db := middleware.ConnectToDB(cfg.Database)
 	defer db.Close()
 	ips, _ := QueryIp(db)
 	fmt.Println("Query result:", ips)
@@ -22,28 +18,14 @@ func TestQueryIp(t *testing.T) {
 	}
 }
 
-func TestCalculateAvgDelay(t *testing.T) {
-
-	pool := middleware.CreateRedisPool()
-	defer pool.Close()
-
-	conn := pool.Get()
-	defer conn.Close()
-	db := middleware.ConnectToDB()
-	defer middleware.CloseDB()
-	var i int64
-	for i = 1; i < 4; i++ {
-		key := "192.168.1.1:192.168.2.2"
-		value, _ := json.Marshal(config.ProbeResult{
-			SourceIP:      "192.168.1.1",
-			DestinationIP: "192.168.2.2",
-			Delay:         i,
-			Timestamp:     time.Now().Format("2006-01-02 15:04:05"),
-		})
-		_, lpushErr := conn.Do("LPUSH", key, value)
-		if lpushErr != nil {
-			log.Printf("Error storing result in redis: %v", lpushErr)
-		}
+func TestGetLatestNodeInfoByRegion(t *testing.T) {
+	cfg, _ := middleware.LoadConfig("../scheduling_config.toml")
+	db := middleware.ConnectToDB(cfg.Database)
+	defer db.Close()
+	region, err := GetLatestNodeInfoByRegion(db, "US-East")
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	CalculateAvgDelay(conn, db, "192.168.1.1", "192.168.2.2")
+	fmt.Println(region)
 }

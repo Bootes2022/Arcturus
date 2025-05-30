@@ -1,7 +1,7 @@
 package collector
 
 import (
-	"data/metrics_processing/protocol"
+	"forwarding/metrics_processing/protocol"
 	"math"
 )
 

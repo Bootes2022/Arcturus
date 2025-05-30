@@ -64,10 +64,18 @@ CREATE TABLE domain_origin (
 );
 
 CREATE TABLE node_region (
-   id INT AUTO_INCREMENT PRIMARY KEY,
-   ip VARCHAR(50) NOT NULL UNIQUE,
-   region VARCHAR(50) NOT NULL,
-   hostname VARCHAR(100),
-   description VARCHAR(255),
-   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ip VARCHAR(50) NOT NULL UNIQUE,
+    region VARCHAR(50) NOT NULL,
+    hostname VARCHAR(100),
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE domain_config (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_name VARCHAR(255) NOT NULL UNIQUE,
+    total_req_increment INT NOT NULL,
+    redistribution_proportion DOUBLE NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

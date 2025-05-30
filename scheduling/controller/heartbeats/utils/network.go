@@ -3,9 +3,9 @@ package utils
 
 import (
 	"context"
-	"control/pool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"scheduling/pool"
 	"time"
 )
 

@@ -1,11 +1,11 @@
 package linkevaluate
 
 import (
-	"control/config"
-	"control/models"
 	"database/sql"
 	"fmt"
 	"log"
+	"scheduling/config"
+	"scheduling/models"
 )
 
 const (

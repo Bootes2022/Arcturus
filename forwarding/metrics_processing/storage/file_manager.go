@@ -2,10 +2,10 @@ package storage
 
 import (
 	"crypto/md5"
-	"data/metrics_processing/protocol"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"forwarding/metrics_processing/protocol"
 	"io"
 	"log"
 	"os"

@@ -3,10 +3,10 @@ package forwarder
 import (
 	"bufio"
 	"bytes"
-	"data/forwarder/connection"
-	packet "data/packet_handler"
-	"data/router"
 	"fmt"
+	"forwarding/forwarder/connection"
+	packet "forwarding/packet_handler"
+	"forwarding/router"
 	"io"
 	"log"
 	"math/rand"
