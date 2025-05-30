@@ -70,31 +70,25 @@ func StartDataPlane(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-
 			syncCtx, syncCancel := context.WithTimeout(context.Background(), 5*time.Second)
-
 			info, err := collector2.CollectSystemInfo()
 			if err != nil {
 				log.Printf(": %v", err)
 				syncCancel()
 				continue
 			}
-
 			metrics := collector2.ConvertToProtoMetrics(info)
-
 			regionProbeResults, err := probe.CollectRegionProbeResults(fileManager)
 			if err != nil {
 				log.Printf(": %v", err)
 				regionProbeResults = []*protocol.RegionProbeResult{} //
 			}
-
 			syncResp, err := grpcClient.SyncMetrics(syncCtx, metrics, regionProbeResults)
 			if err != nil {
 				log.Printf(": %v", err)
 				syncCancel()
 				continue
 			}
-
 			if len(syncResp.RegionAssessments) > 0 {
 				nodeList := fileManager.GetNodeList()
 				if nodeList == nil {
@@ -117,12 +111,8 @@ func StartDataPlane(ctx context.Context) {
 					}
 				}
 			}
-			log.Println("")
-
 			syncCancel()
-
 		case <-ctx.Done():
-			log.Println("，")
 			return
 		}
 	}
