@@ -17,29 +17,30 @@ import (
 )
 
 var (
-	ServerAddr     = "104.238.153.192:8080" //
-	ReportInterval = 5 * time.Second        //
-	DataDir        = "../../agent_storage"  //
+	// ServerAddr     = "104.238.153.192:8080" // This will now be passed as a parameter
+	ReportInterval = 5 * time.Second       //
+	DataDir        = "../../agent_storage" //
 )
 
-func StartDataPlane(ctx context.Context) {
+func StartDataPlane(ctx context.Context, serverAddr string) {
+	log.Printf("Metrics processing starting. ServerAddr: %s", serverAddr)
 
 	absDataDir, err := filepath.Abs(DataDir)
 	if err != nil {
-		log.Fatalf(": %v", err)
+		log.Fatalf("%v", err)
 	}
 
 	if err := os.MkdirAll(absDataDir, 0755); err != nil {
-		log.Fatalf(": %v", err)
+		log.Fatalf("%v", err)
 	}
 
 	fileManager, err := storage.NewFileManager(absDataDir)
 	if err != nil {
-		log.Fatalf(": %v", err)
+		log.Fatalf("%v", err)
 	}
-	log.Println("gRPC，...")
+	log.Println("gRPC")
 
-	grpcClient, err := client.NewGrpcClient(ServerAddr, fileManager)
+	grpcClient, err := client.NewGrpcClient(serverAddr, fileManager)
 	if err != nil {
 		log.Fatalf("gRPC: %v", err)
 	}
@@ -51,7 +52,6 @@ func StartDataPlane(ctx context.Context) {
 	}
 
 	if !fileManager.IsInitialized() {
-		log.Println("...")
 
 		initCtx, initCancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer initCancel()
@@ -61,7 +61,7 @@ func StartDataPlane(ctx context.Context) {
 		if err := grpcClient.InitDataPlane(initCtx, metrics); err != nil {
 			log.Fatalf(": %v", err)
 		}
-		log.Println("")
+
 	}
 
 	ticker := time.NewTicker(ReportInterval)

@@ -80,6 +80,11 @@ chmod +x scheduling/deploy_scheduling.sh
 # If you want deploy scheduling, run scheduling-specific environment setup
 ./scheduling/deploy_scheduling.sh
 
+# If you want deploy traefik, run traefik-specific environment setup
+cd Arcturus/scheduling/controller/treafik_config/traefik
+chmod +x deploy_traefik_from_github.sh
+sudo bash deploy_traefik_from_github.sh <IP address of the scheduling server>
+
 ```
 
 • [Scheduling ](./scheduling/README.md) - Details for the scheduling plane            

@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 const (
@@ -201,28 +199,28 @@ func (p *TaskPublisher) Run(ctx context.Context) error {
 	return nil
 }
 
-func main() {
+// func main() {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sig
-		log.Println("Received termination signal. Shutting down...")
-		cancel()
-	}()
+// 	sig := make(chan os.Signal, 1)
+// 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+// 	go func() {
+// 		<-sig
+// 		log.Println("Received termination signal. Shutting down...")
+// 		cancel()
+// 	}()
 
-	publisher, err := NewTaskPublisher(DefaultEtcdConfig())
-	if err != nil {
-		log.Fatalf("Failed to create task publisher: %v\n", err)
-	}
-	defer publisher.Close()
+// 	publisher, err := NewTaskPublisher(DefaultEtcdConfig())
+// 	if err != nil {
+// 		log.Fatalf("Failed to create task publisher: %v\n", err)
+// 	}
+// 	defer publisher.Close()
 
-	if err := publisher.Run(ctx); err != nil {
-		log.Fatalf("Error running publisher: %v\n", err)
-	}
+// 	if err := publisher.Run(ctx); err != nil {
+// 		log.Fatalf("Error running publisher: %v\n", err)
+// 	}
 
-	log.Println("Publisher completed successfully")
-}
+// 	log.Println("Publisher completed successfully")
+// }
