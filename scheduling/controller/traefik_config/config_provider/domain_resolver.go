@@ -1,8 +1,8 @@
 package traefik_config
 
 import (
-	"control/controller/last_mile_scheduling/bpr"
 	"log"
+	"scheduling/controller/last_mile_scheduling/bpr"
 )
 
 // GetDomainTargets returns a list of IP addresses and their weights for the provided domain.
