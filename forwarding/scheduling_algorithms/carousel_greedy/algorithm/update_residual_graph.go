@@ -1,7 +1,7 @@
 package algorithm
 
 import (
-	"data/scheduling_algorithms/carousel_greedy/graph"
+	"forwarding/scheduling_algorithms/carousel_greedy/graph"
 )
 
 func UpdateResidualGraph(g *graph.Graph, path *graph.Path) {

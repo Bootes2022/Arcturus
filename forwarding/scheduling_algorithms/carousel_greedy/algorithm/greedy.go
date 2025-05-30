@@ -1,14 +1,12 @@
 package algorithm
 
 import (
-	"data/scheduling_algorithms/carousel_greedy/graph"
-	"data/scheduling_algorithms/carousel_greedy/logger"
+	"forwarding/scheduling_algorithms/carousel_greedy/graph"
+	"forwarding/scheduling_algorithms/carousel_greedy/logger"
 )
 
 func GreedyMFPC(g *graph.Graph, thetaA, thetaL float64, maxEdgeUsage int) []*graph.Path {
 	logger.LogSectionStart("MFPC")
-	logger.Info("MFPC，: %.2f, : %.2f, : %d",
-		thetaA, thetaL, maxEdgeUsage)
 
 	paths := []*graph.Path{}
 	workingGraph := g.Copy()
@@ -21,7 +19,6 @@ func GreedyMFPC(g *graph.Graph, thetaA, thetaL float64, maxEdgeUsage int) []*gra
 		path := pathFinder.FindPath()
 
 		if path == nil {
-			logger.Info("，")
 			break
 		}
 

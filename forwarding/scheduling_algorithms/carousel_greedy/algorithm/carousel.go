@@ -1,9 +1,9 @@
 package algorithm
 
 import (
-	"data/scheduling_algorithms/carousel_greedy/graph"
-	"data/scheduling_algorithms/carousel_greedy/logger"
 	"fmt"
+	"forwarding/scheduling_algorithms/carousel_greedy/graph"
+	"forwarding/scheduling_algorithms/carousel_greedy/logger"
 	"strings"
 )
 
