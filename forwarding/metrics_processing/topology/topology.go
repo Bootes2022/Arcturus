@@ -1,9 +1,9 @@
 package topology
 
 import (
-	t "data/common"
-	"data/metrics_processing/protocol"
-	"data/router"
+	t "forwarding/common"
+	"forwarding/metrics_processing/protocol"
+	"forwarding/router"
 	"log"
 )
 

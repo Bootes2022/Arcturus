@@ -13,12 +13,45 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/BurntSushi/toml"
 )
 
-func main() {
+// Config struct to hold configuration from toml file
+type ForwardingConfig struct {
+	Metrics MetricsConfig `toml:"metrics"`
+}
 
-	port := flag.Int("port", 50051, "TCP")
+type MetricsConfig struct {
+	ServerAddr string `toml:"server_addr"`
+}
+
+func loadConfig(path string) (*ForwardingConfig, error) {
+	var config ForwardingConfig
+	if _, err := toml.DecodeFile(path, &config); err != nil {
+		return nil, fmt.Errorf("failed to load config file %s: %w", path, err)
+	}
+	// Provide a default value if not specified in the config, or handle error
+	if config.Metrics.ServerAddr == "" {
+		log.Println("Metrics ServerAddr not specified in config, using default or handling error as needed.")
+		// For now, let's set a default if empty, or you can make it a fatal error.
+		// config.Metrics.ServerAddr = "127.0.0.1:8080" // Example default
+	}
+	return &config, nil
+}
+
+func main() {
+	configFile := flag.String("config", "forwarding_config.toml", "Path to the configuration file")
+	port := flag.Int("port", 50051, "TCP listener port for the forwarding service")
 	flag.Parse()
+
+	cfg, err := loadConfig(*configFile)
+	if err != nil {
+		log.Fatalf("Error loading configuration: %v", err)
+	}
+	if cfg.Metrics.ServerAddr == "" {
+		log.Fatalf("Metrics server_addr is not configured in %s", *configFile)
+	}
 
 	addr := fmt.Sprintf(":%d", *port)
 
@@ -56,7 +89,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go metrics_processing.StartDataPlane(ctx)
+	go metrics_processing.StartDataPlane(ctx, cfg.Metrics.ServerAddr)
 
 	go func() {
 		time.Sleep(1 * time.Minute)

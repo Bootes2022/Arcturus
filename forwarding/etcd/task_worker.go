@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"log"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 	"time"
+
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 type TaskProcessor func(task Task) (string, error)
@@ -190,29 +188,29 @@ func (w *TaskWorker) Run(ctx context.Context) error {
 	return w.Start(ctx)
 }
 
-func main() {
+// func main() {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+// 	ctx, cancel := context.WithCancel(context.Background())
+// 	defer cancel()
 
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sig
-		log.Println("Received termination signal. Shutting down...")
-		cancel()
-	}()
+// 	sig := make(chan os.Signal, 1)
+// 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+// 	go func() {
+// 		<-sig
+// 		log.Println("Received termination signal. Shutting down...")
+// 		cancel()
+// 	}()
 
-	worker, err := NewTaskWorker(DefaultEtcdConfig())
-	if err != nil {
-		log.Fatalf("Failed to create task worker: %v\n", err)
-	}
-	defer worker.Close()
+// 	worker, err := NewTaskWorker(DefaultEtcdConfig())
+// 	if err != nil {
+// 		log.Fatalf("Failed to create task worker: %v\n", err)
+// 	}
+// 	defer worker.Close()
 
-	log.Printf("Starting worker with ID: %s\n", worker.workerID)
-	log.Println("Press Ctrl+C to exit.")
+// 	log.Printf("Starting worker with ID: %s\n", worker.workerID)
+// 	log.Println("Press Ctrl+C to exit.")
 
-	if err := worker.Run(ctx); err != nil {
-		log.Fatalf("Error running worker: %v\n", err)
-	}
-}
+// 	if err := worker.Run(ctx); err != nil {
+// 		log.Fatalf("Error running worker: %v\n", err)
+// 	}
+// }
