@@ -16,7 +16,6 @@ import (
 	"scheduling/controller/heartbeats/storage"
 	"scheduling/controller/heartbeats/tasks"
 	"scheduling/controller/heartbeats/utils"
-	"scheduling/middleware"
 	"syscall"
 	"time"
 )
@@ -72,8 +71,8 @@ func NewHeartbeatServer(config ServerConfig, db *sql.DB) (*HeartbeatServer, erro
 		shutdownHandler: utils.NewShutdownHandler(func() {
 			configPusher.Release()
 			utils.ReleasePoolResources()
-			middleware.CloseDB()
-			log.Println("")
+			//middleware.CloseDB()
+			log.Println("server down ")
 		}),
 	}, nil
 }

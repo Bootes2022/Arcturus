@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"scheduling/controller/heartbeats"
 	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/controller/last_mile_scheduling/bpr"
 	"scheduling/middleware"
@@ -39,12 +41,17 @@ func main() {
 	} else {
 		log.Println("Node regions processing completed.")
 	}
-	// Run ScheduleBPRRuns in a goroutine so it doesn't block main
+	ctx := context.Background()
+	heartbeats.StartServer(ctx, db)
 	go func() {
 		for params := range paramsChannel {
 			fmt.Printf("[Main App] Received parameters: Domain=%s, Increment=%d, Proportion=%.2f\n",
 				params.Domain, params.TotalReqIncrement, params.RedistributionProportion)
-			bpr.ScheduleBPRRuns(db, 5*time.Second, params.Domain, "US-East")
+			nodesCount, _ := models.CountMetricsNodes(db)
+			if nodesCount > 0 {
+				bpr.ScheduleBPRRuns(db, 5*time.Second, params.Domain, "US-East")
+			}
+
 		}
 		fmt.Println("[Main App] Parameter channel closed.")
 	}()
@@ -89,6 +96,4 @@ func main() {
 			return // Exit the main function, terminating the program
 		}
 	}
-	/*ctx := context.Background()
-	heartbeats.StartServer(ctx, db)*/
 }

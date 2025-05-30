@@ -45,11 +45,8 @@ func NewFileManager(dataDir string) (*FileManager, error) {
 	}
 
 	manager.loadFiles()
-
 	manager.calculateHashes()
-
 	go manager.hashUpdateListener()
-
 	return manager, nil
 }
 
@@ -62,7 +59,6 @@ func (fm *FileManager) loadFiles() {
 			log.Printf(": %d ", len(nodeList.Nodes))
 		}
 	}
-
 	if data, err := os.ReadFile(fm.probeTasksFile); err == nil {
 		var tasks []*protocol.ProbeTask
 		if err := json.Unmarshal(data, &tasks); err == nil {

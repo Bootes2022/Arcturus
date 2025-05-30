@@ -28,9 +28,7 @@ func NewFileManager(dataDir string) (*FileManager, error) {
 		domainIPMappingsFile: filepath.Join(dataDir, "domain_ip_mappings.json"),
 		cacheManager:         NewCacheManager(),
 	}
-
 	fm.loadFiles()
-
 	return fm, nil
 }
 
