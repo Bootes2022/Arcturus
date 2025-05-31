@@ -2,9 +2,9 @@
 
 # Database connection
 [database]
-username = "root"
-password = "000000" # IMPORTANT: Use your actual password
-dbname   = "system_info"
+username = "myapp_user"
+password = "StrongAppUserPassword456!" 
+dbname   = "myapp_db"
 
 # domain_origin table data
 # The domain name you want to accelerate and the corresponding IP

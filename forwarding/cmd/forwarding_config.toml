@@ -2,4 +2,4 @@
 
 [metrics]
 # The server IP of deploying the Scheduling module.
-server_addr = "142.250.190.78:80" 
+server_addr = "142.250.190.78:8080" 
