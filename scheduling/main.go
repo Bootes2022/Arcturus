@@ -9,6 +9,7 @@ import (
 	"scheduling/controller/heartbeats"
 	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/controller/last_mile_scheduling/bpr"
+	traefik_config "scheduling/controller/traefik_config/config_provider"
 	"scheduling/middleware"
 	"scheduling/models"
 	"syscall"
@@ -66,7 +67,7 @@ func main() {
 
 	log.Println("Application started. BPR scheduling and result polling active.")
 	log.Println("Press Ctrl+C to exit gracefully.")
-
+	go traefik_config.RunServer()
 	// Main loop to handle ticker events and shutdown signals
 	for {
 		select {

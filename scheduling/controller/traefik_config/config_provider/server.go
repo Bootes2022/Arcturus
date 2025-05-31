@@ -13,7 +13,7 @@ func RunServer() {
 
 	// Define the interval for re-initializing the configuration.
 	// For example, every 5 minutes. Adjust as needed.
-	configRefreshInterval := 5 * time.Minute
+	configRefreshInterval := 5 * time.Second
 
 	// Start a goroutine to periodically re-initialize the configuration
 	go func() {

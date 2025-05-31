@@ -29,6 +29,34 @@ check_root() {
     fi
 }
 
+install_selinux_utils() {
+    log_info "Checking for SELinux utilities (semanage)..."
+    if command -v semanage &> /dev/null; then
+        log_info "'semanage' is already available."
+        return 0
+    fi
+
+    log_info "Attempting to install policycoreutils-python-utils (provides semanage)..."
+    if command -v dnf &> /dev/null; then
+        sudo dnf install -y policycoreutils-python-utils
+    elif command -v yum &> /dev/null; then
+        sudo yum install -y policycoreutils-python-utils
+    else
+        log_info "Warning: Neither 'dnf' nor 'yum' found. Cannot automatically install 'policycoreutils-python-utils'."
+        log_info "If 'semanage' is not available, SELinux context changes will be skipped."
+        return 1 # Indicate that semanage might not be available
+    fi
+
+    if command -v semanage &> /dev/null; then
+        log_info "'semanage' installed successfully."
+        return 0
+    else
+        log_error "Failed to install 'policycoreutils-python-utils' or 'semanage' is still not found."
+        log_info "SELinux context changes will likely fail or be skipped."
+        return 1 # Indicate failure
+    fi
+}
+
 create_user_if_not_exists() {
     if ! id "$1" &>/dev/null; then
         log_info "Creating user '$1'..."
@@ -113,6 +141,7 @@ validate_ip() {
 
 # --- Main Logic ---
 check_root
+install_selinux_utils
 
 # Validate API_SERVER_IP parameter
 API_SERVER_IP="$1"
@@ -141,6 +170,36 @@ sudo mkdir -p "$PLUGIN_CORRECT_DESTINATION_DIR" || log_error "Failed to create d
 
 # 2. Download and install Traefik binary
 download_traefik "$TRAEFIK_VERSION"
+
+# Apply SELinux context to Traefik binary
+if command -v semanage &> /dev/null && command -v restorecon &> /dev/null; then
+    log_info "Applying SELinux context to Traefik binary ($TRAEFIK_INSTALL_DIR/traefik)..."
+    # Target type httpd_sys_script_exec_t is common for web service executables
+    TARGET_CONTEXT_TYPE="httpd_sys_script_exec_t"
+    TARGET_BINARY_PATH="$TRAEFIK_INSTALL_DIR/traefik"
+
+    # Check if a context is already defined for this exact path pattern
+    if sudo semanage fcontext -l | grep -q -E "^${TARGET_BINARY_PATH//\//\\/}\s+"; then # Escape slashes for regex
+        log_info "Modifying existing SELinux context for $TARGET_BINARY_PATH to $TARGET_CONTEXT_TYPE."
+        sudo semanage fcontext -m -t "$TARGET_CONTEXT_TYPE" "$TARGET_BINARY_PATH" || log_info "Warning: semanage fcontext -m command failed. Continuing."
+    else
+        log_info "Adding new SELinux context for $TARGET_BINARY_PATH as $TARGET_CONTEXT_TYPE."
+        sudo semanage fcontext -a -t "$TARGET_CONTEXT_TYPE" "$TARGET_BINARY_PATH" || log_info "Warning: semanage fcontext -a command failed. Continuing."
+    fi
+
+    if sudo restorecon -vF "$TARGET_BINARY_PATH"; then
+        log_info "SELinux context applied with restorecon for $TARGET_BINARY_PATH."
+        current_context=$(ls -Z "$TARGET_BINARY_PATH" 2>/dev/null | awk '{print $1}')
+        log_info "Current SELinux context of Traefik binary: $current_context"
+        if ! echo "$current_context" | grep -q "$TARGET_CONTEXT_TYPE"; then
+            log_info "Warning: SELinux context for Traefik binary might not be $TARGET_CONTEXT_TYPE. Current: $current_context. Manual check might be needed."
+        fi
+    else
+        log_error "SELinux: restorecon command failed for Traefik binary. The service might not start if SELinux is enforcing."
+    fi
+else
+    log_info "Warning: 'semanage' or 'restorecon' command not found. Skipping SELinux context changes for Traefik binary."
+fi
 
 # 3. Copy config files and plugins
 log_info "--- DEBUG: Path Variables ---"
@@ -189,11 +248,56 @@ else
 fi
 shopt -u dotglob
 
+# Apply SELinux context to Traefik plugins directory
+if command -v semanage &> /dev/null && command -v restorecon &> /dev/null; then
+    log_info "Applying SELinux context to Traefik plugins directory ($PLUGIN_CORRECT_DESTINATION_DIR)..."
+    # Target type httpd_sys_content_t is common for web content read by services
+    TARGET_PLUGIN_CONTEXT_TYPE="httpd_sys_content_t"
+    TARGET_PLUGIN_PATH_PATTERN="${PLUGIN_CORRECT_DESTINATION_DIR}(/.*)?"
+
+    # Escape path for grep regex
+    ESCAPED_PLUGIN_PATH_PATTERN="^${PLUGIN_CORRECT_DESTINATION_DIR//\//\\/}(\\/.*)?\s+"
+
+    if sudo semanage fcontext -l | grep -q -E "$ESCAPED_PLUGIN_PATH_PATTERN"; then
+        log_info "Modifying existing SELinux context for plugins $PLUGIN_CORRECT_DESTINATION_DIR to $TARGET_PLUGIN_CONTEXT_TYPE."
+        sudo semanage fcontext -m -t "$TARGET_PLUGIN_CONTEXT_TYPE" "$TARGET_PLUGIN_PATH_PATTERN" || log_info "Warning: semanage fcontext -m for plugins failed."
+    else
+        log_info "Adding new SELinux context for plugins $PLUGIN_CORRECT_DESTINATION_DIR as $TARGET_PLUGIN_CONTEXT_TYPE."
+        sudo semanage fcontext -a -t "$TARGET_PLUGIN_CONTEXT_TYPE" "$TARGET_PLUGIN_PATH_PATTERN" || log_info "Warning: semanage fcontext -a for plugins failed."
+    fi
+
+    if sudo restorecon -RvvF "$PLUGIN_CORRECT_DESTINATION_DIR"; then
+        log_info "SELinux context refreshed for $PLUGIN_CORRECT_DESTINATION_DIR."
+    else
+        log_info "Warning: SELinux: restorecon command failed for $PLUGIN_CORRECT_DESTINATION_DIR."
+    fi
+else
+    log_info "Warning: 'semanage' or 'restorecon' command not found. Skipping SELinux context changes for plugins."
+fi
+
 # 4. Set file permissions
 log_info "Setting file permissions..."
 sudo chown -R root:root "$CONFIG_DIR"
 sudo chmod -R 644 "$CONFIG_DIR"/*
 sudo chmod -R 755 "$CONFIG_DIR/conf.d"
+
+# Apply SELinux context to Traefik config directory
+if command -v restorecon &> /dev/null; then
+    log_info "Applying SELinux context to Traefik config directory ($CONFIG_DIR)..."
+    # Default context for /etc files is usually etc_t. restorecon should enforce this.
+    if sudo restorecon -RvvF "$CONFIG_DIR"; then
+        log_info "SELinux context refreshed for $CONFIG_DIR."
+        current_context_config=$(ls -Z "$CONFIG_DIR/traefik.yml" 2>/dev/null | awk '{print $1}')
+        log_info "Current SELinux context of $CONFIG_DIR/traefik.yml: $current_context_config"
+        if ! echo "$current_context_config" | grep -q "etc_t"; then
+            log_info "Warning: SELinux context for $CONFIG_DIR/traefik.yml might not be etc_t (or similar like user_home_etc_t). Current: $current_context_config."
+        fi
+    else
+        log_info "Warning: SELinux: restorecon command failed for $CONFIG_DIR. Default contexts might be incorrect."
+    fi
+else
+    log_info "Warning: 'restorecon' command not found. Skipping SELinux context refresh for $CONFIG_DIR."
+fi
 
 # 5. Create systemd service file
 SYSTEMD_SERVICE_FILE="/etc/systemd/system/traefik.service"
