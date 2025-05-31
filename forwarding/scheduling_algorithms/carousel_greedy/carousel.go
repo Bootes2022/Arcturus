@@ -1,12 +1,12 @@
 package main
 
 import (
-	"data/scheduling_algorithms/carousel_greedy/algorithm"
-	"data/scheduling_algorithms/carousel_greedy/graph"
-	"data/scheduling_algorithms/carousel_greedy/logger"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"forwarding/scheduling_algorithms/carousel_greedy/algorithm"
+	"forwarding/scheduling_algorithms/carousel_greedy/graph"
+	"forwarding/scheduling_algorithms/carousel_greedy/logger"
 	"os"
 	"path/filepath"
 	"strings"
