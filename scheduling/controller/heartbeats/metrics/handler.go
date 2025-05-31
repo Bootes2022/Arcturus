@@ -173,75 +173,62 @@ func (h *Handler) SyncMetrics(ctx context.Context, req *pb.SyncRequest) (*pb.Syn
 	}
 
 	if len(req.RegionProbeResults) > 0 {
-		err := h.processor.ProcessProbeResults(req.Metrics.Ip, req.RegionProbeResults, h.fileManager)
+		// err := h.processor.ProcessProbeResults(req.Metrics.Ip, req.RegionProbeResults, h.fileManager)
+		err := h.processor.ProcessProbeResults(req.Metrics.Ip, req.RegionProbeResults)
 		if err != nil {
 			log.Printf(": %v", err)
 
 		}
 	}
-
 	regionAssessments := h.assessmentCalc.GetCachedAssessments()
 	if len(regionAssessments) > 0 {
 		resp.RegionAssessments = regionAssessments
 		log.Printf(" %s  %d ", req.Metrics.Ip, len(regionAssessments))
 	}
-
 	return resp, nil
 }
 
 func (h *Handler) StartBackgroundServicesWhenReady(ctx context.Context) {
-
 	if h.generatorStarted.Load() && h.calcStarted.Load() {
 		log.Println("，")
 		return
 	}
-
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-
 	log.Println("，")
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-
 			if h.generatorStarted.Load() && h.calcStarted.Load() {
 				log.Println("，")
 				return
 			}
-
 			nodesCount, err := models.CountMetricsNodes(h.db)
 			if err != nil {
-				log.Printf(": %v", err)
+				log.Printf("err: %v", err)
 				continue
 			}
-
+			// receive dataPlane node info
 			if nodesCount > 0 {
-
 				h.startBackgroundServicesIfNeeded(ctx)
-
 				if h.generatorStarted.Load() && h.calcStarted.Load() {
-					log.Println("，")
 					return
 				}
 			}
-
-			log.Println("，: ", nodesCount)
+			log.Println("，nodesCount: ", nodesCount)
 		}
 	}
 }
 
 func (h *Handler) startBackgroundServicesIfNeeded(ctx context.Context) {
-
 	if !h.generatorStarted.Load() {
 		if h.generatorStarted.CompareAndSwap(false, true) {
 			log.Println("，")
 			go h.taskGenerator.StartTaskGenerator(ctx)
 		}
 	}
-
 	if !h.calcStarted.Load() {
 		if h.calcStarted.CompareAndSwap(false, true) {
 			log.Println("，")

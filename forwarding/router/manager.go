@@ -2,6 +2,7 @@ package router
 
 import (
 	"forwarding/metrics_processing/collector"
+	"forwarding/metrics_processing/protocol"
 	"forwarding/metrics_processing/storage"
 	"forwarding/scheduling_algorithms/k_shortest"
 	"log"
@@ -9,16 +10,12 @@ import (
 )
 
 type PathManager struct {
-	pathChan chan []k_shortest.PathWithIP
-
-	latestPaths []k_shortest.PathWithIP
-
-	mu sync.RWMutex
-
+	pathChan      chan []k_shortest.PathWithIP
+	latestPaths   []k_shortest.PathWithIP
+	mu            sync.RWMutex
 	sourceIP      string
 	destinationIP string
-
-	k int
+	k             int
 }
 
 var (
@@ -100,6 +97,19 @@ func GetDefaultTargetIP() string {
 	return ""
 }
 
+// GetAllDomainMapIP get all map ip list
+func GetAllDomainMapIP() []*protocol.DomainIPMapping {
+	// Get the FileManager instance
+	fileManager := getFileManager()
+	if fileManager == nil {
+		log.Printf("Failed to retrieve FileManager instance")
+		return nil
+	}
+	// Get all domain mappings
+	mappings := fileManager.GetDomainIPMappings()
+	return mappings
+}
+
 func GetInstance() *PathManager {
 	once.Do(func() {
 		ip, err := collector.GetIP()
@@ -140,64 +150,48 @@ func (pm *PathManager) CalculatePaths(network k_shortest.Network,
 	destIdx, destExists := ipToIndex[pm.destinationIP]
 
 	if !srcExists || !destExists {
-		log.Printf(": IPIP (: %v, : %v)",
+		log.Printf("srcip: IP or destip:IP not exists(: %v, : %v)",
 			srcExists, destExists)
 		return
 	}
 
 	flow := k_shortest.Flow{Source: sourceIdx, Destination: destIdx}
-
 	paths := k_shortest.KShortest(network, flow, pm.k, 3, 2) // theta
-
 	var pathsWithIP []k_shortest.PathWithIP
-
 	totalLatency := 0
 	for _, p := range paths {
 		totalLatency += p.Latency
 	}
-
 	if len(paths) == 0 || totalLatency == 0 {
-		log.Println("")
-
 		select {
 		case pm.pathChan <- []k_shortest.PathWithIP{}:
-
 		default:
 
 		}
 		return
 	}
-
 	for _, p := range paths {
-
 		ipNodes := make([]string, len(p.Nodes))
 		for j, node := range p.Nodes {
 			ipNodes[j] = indexToIP[node]
 		}
-
 		var weight int
 		if p.Latency == 0 {
-
 			weight = 100
 			log.Printf(": ，: %d", weight)
 		} else {
 			weight = totalLatency / p.Latency
 		}
-
 		pathsWithIP = append(pathsWithIP, k_shortest.PathWithIP{
 			IPList:  ipNodes,
 			Latency: p.Latency,
 			Weight:  weight,
 		})
-
 		log.Printf(": : %v, : %d, : %d", ipNodes, p.Latency, weight)
 	}
-
 	select {
 	case pm.pathChan <- pathsWithIP:
-
 	default:
-
 		<-pm.pathChan
 		pm.pathChan <- pathsWithIP
 	}
@@ -206,11 +200,9 @@ func (pm *PathManager) CalculatePaths(network k_shortest.Network,
 func (pm *PathManager) GetPaths() []k_shortest.PathWithIP {
 	pm.mu.RLock()
 	defer pm.mu.RUnlock()
-
 	if pm.latestPaths == nil {
 		return []k_shortest.PathWithIP{}
 	}
-
 	paths := make([]k_shortest.PathWithIP, len(pm.latestPaths))
 	copy(paths, pm.latestPaths)
 	return paths
@@ -219,7 +211,6 @@ func (pm *PathManager) GetPaths() []k_shortest.PathWithIP {
 func (pm *PathManager) SetSourceDestination(source, destination string) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-
 	pm.sourceIP = source
 	pm.destinationIP = destination
 }

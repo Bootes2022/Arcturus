@@ -279,7 +279,8 @@ func (s *EtcdSync) handleProbeResultsUpdate(sourceRegion, nodeIP, targetRegion s
 	s.dataAccessMutex.Lock()
 	defer s.dataAccessMutex.Unlock()
 
-	err := s.processor.ProcessProbeResults(nodeIP, []*pb.RegionProbeResult{probeResult}, s.fileManager)
+	//err := s.processor.ProcessProbeResults(nodeIP, []*pb.RegionProbeResult{probeResult}, s.fileManager)
+	err := s.processor.ProcessProbeResults(nodeIP, []*pb.RegionProbeResult{probeResult})
 	if err != nil {
 		log.Printf(": %v", err)
 		return

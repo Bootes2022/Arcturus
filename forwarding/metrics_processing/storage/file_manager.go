@@ -45,11 +45,8 @@ func NewFileManager(dataDir string) (*FileManager, error) {
 	}
 
 	manager.loadFiles()
-
 	manager.calculateHashes()
-
 	go manager.hashUpdateListener()
-
 	return manager, nil
 }
 
@@ -66,9 +63,11 @@ func (fm *FileManager) loadFiles() {
 	} else if !os.IsNotExist(err) { // Log error only if it's not a 'file not found' error
 		log.Printf("Error reading nodeListFile (%s): %v", fm.nodeListFile, err)
 	}
+
 	fm.nodeLock.Unlock()
 
 	fm.taskLock.Lock()
+
 	if data, err := os.ReadFile(fm.probeTasksFile); err == nil {
 		var tasks []*protocol.ProbeTask
 		if err := json.Unmarshal(data, &tasks); err == nil {
