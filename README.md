@@ -79,16 +79,22 @@ source ~/.profile
 # 
 cd scheduling/
 # Run scheduling
+sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --permanent --add-port=8090/tcp
+sudo firewall-cmd --reload
 go run main.go
 
 # If you want deploy traefik, run traefik-specific environment setup
 cd scheduling/controller/traefik_config/traefik
 chmod +x deploy_traefik_from_github.sh
 sudo bash deploy_traefik_from_github.sh <IP address of the scheduling server>
+source ~/.profile
 
 # If you want deploy forwarding, Edit the configuration file (forwarding_config.toml)
 cd forwarding/cmd/
 # Run forwarding
+sudo firewall-cmd --permanent --add-port=50050-50059/tcp
+sudo firewall-cmd --reload
 go run main.go
 
 ```
