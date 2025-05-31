@@ -103,12 +103,12 @@ func CollectRegionProbeResults(fileManager *storage.FileManager) ([]*protocol.Re
 	probeTasks := fileManager.GetProbeTasks()
 
 	if nodeList == nil || len(nodeList.Nodes) == 0 {
-		log.Println("，")
+
 		return []*protocol.RegionProbeResult{}, nil
 	}
 
 	if len(probeTasks) == 0 {
-		log.Println("，")
+
 		return []*protocol.RegionProbeResult{}, nil
 	}
 

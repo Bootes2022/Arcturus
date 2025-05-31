@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"forwarding/packet_handler"
+	packet "forwarding/packet_handler"
 )
 
 type BufferConfig struct {
@@ -23,10 +23,10 @@ type BufferConfig struct {
 
 func DefaultBufferConfig() BufferConfig {
 	return BufferConfig{
-		BuffersPerPath:       4,
+		BuffersPerPath:       1,
 		MinIdleTime:          60 * time.Second,
 		MaxPathIdleTime:      300 * time.Second,
-		MaxRequestsPerBuffer: 3,
+		MaxRequestsPerBuffer: 1,
 		MaxBufferSize:        1300, // MTU-tcpheader-ipheader-HEADER
 		MaxWaitTime:          5 * time.Millisecond,
 		StatisticsInterval:   5 * time.Second,
