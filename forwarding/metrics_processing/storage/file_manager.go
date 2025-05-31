@@ -51,29 +51,56 @@ func NewFileManager(dataDir string) (*FileManager, error) {
 }
 
 func (fm *FileManager) loadFiles() {
-
+	fm.nodeLock.Lock()
 	if data, err := os.ReadFile(fm.nodeListFile); err == nil {
 		var nodeList protocol.NodeList
 		if err := json.Unmarshal(data, &nodeList); err == nil {
 			fm.nodeList = &nodeList
-			log.Printf(": %d ", len(nodeList.Nodes))
+			log.Printf("Successfully loaded NodeList. Count: %d", len(nodeList.Nodes))
+		} else {
+			log.Printf("Error unmarshalling nodeListFile (%s): %v. Data: %s", fm.nodeListFile, err, string(data))
 		}
+	} else if !os.IsNotExist(err) { // Log error only if it's not a 'file not found' error
+		log.Printf("Error reading nodeListFile (%s): %v", fm.nodeListFile, err)
 	}
+
+	fm.nodeLock.Unlock()
+
+	fm.taskLock.Lock()
+
 	if data, err := os.ReadFile(fm.probeTasksFile); err == nil {
 		var tasks []*protocol.ProbeTask
 		if err := json.Unmarshal(data, &tasks); err == nil {
 			fm.probeTasks = tasks
-			log.Printf(": %d ", len(tasks))
+			log.Printf("Successfully loaded ProbeTasks. Count: %d", len(tasks))
+		} else {
+			log.Printf("Error unmarshalling probeTasksFile (%s): %v. Data: %s", fm.probeTasksFile, err, string(data))
 		}
+	} else if !os.IsNotExist(err) {
+		log.Printf("Error reading probeTasksFile (%s): %v", fm.probeTasksFile, err)
 	}
+	fm.taskLock.Unlock()
 
+	fm.domainIPLock.Lock()
+	log.Printf("Attempting to load domain_ip_mappings.json from: %s", fm.domainIPMappingsFile)
 	if data, err := os.ReadFile(fm.domainIPMappingsFile); err == nil {
+		log.Printf("Successfully read domain_ip_mappings.json. Data length: %d. Content: %s", len(data), string(data))
 		var mappings []*protocol.DomainIPMapping
 		if err := json.Unmarshal(data, &mappings); err == nil {
 			fm.domainIPMappings = mappings
-			log.Printf("IP: %d ", len(mappings))
+			log.Printf("Successfully unmarshalled DomainIPMappings. Count: %d", len(mappings))
+			if len(mappings) > 0 && mappings[0] != nil {
+				log.Printf("First mapping details - Domain: '%s', IP: '%s'", mappings[0].Domain, mappings[0].Ip)
+			} else if len(mappings) > 0 && mappings[0] == nil {
+				log.Printf("First mapping (mappings[0]) is nil after unmarshalling.")
+			}
+		} else {
+			log.Printf("Error unmarshalling domain_ip_mappings.json (%s): %v. Raw Data: %s", fm.domainIPMappingsFile, err, string(data))
 		}
+	} else {
+		log.Printf("Error reading domain_ip_mappings.json from path %s: %v", fm.domainIPMappingsFile, err)
 	}
+	fm.domainIPLock.Unlock()
 }
 
 func (fm *FileManager) hashUpdateListener() {

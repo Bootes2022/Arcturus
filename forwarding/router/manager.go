@@ -33,7 +33,7 @@ var (
 func getFileManager() *storage.FileManager {
 	fileManagerOnce.Do(func() {
 		var err error
-		fileManagerInstance, err = storage.NewFileManager("./config")
+		fileManagerInstance, err = storage.NewFileManager("../../agent_storage")
 		if err != nil {
 			log.Printf("Failed to create FileManager: %v", err)
 			return
@@ -118,6 +118,7 @@ func GetInstance() *PathManager {
 		}
 		// Use GetDefaultTargetIP to get the default target IP
 		defaultTargetIP := GetDefaultTargetIP()
+		log.Printf("Default target IP: %s", defaultTargetIP)
 		instance = &PathManager{
 			pathChan:      make(chan []k_shortest.PathWithIP, 1),
 			latestPaths:   nil,
