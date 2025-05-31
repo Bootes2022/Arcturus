@@ -74,16 +74,22 @@ chmod +x scheduling/deploy_scheduling.sh
 # Run common environment setup (e.g., Go, etcd)
 ./setup_public_env.sh
 
-# If you want deploy forwarding, run forwarding-specific environment setup
-./forwarding/deploy_forwarding.sh
-
 # If you want deploy scheduling, run scheduling-specific environment setup
 ./scheduling/deploy_scheduling.sh
+# 
+cd scheduling/
+# Run scheduling
+go run main.go
 
 # If you want deploy traefik, run traefik-specific environment setup
-cd Arcturus/scheduling/controller/treafik_config/traefik
+cd scheduling/controller/traefik_config/traefik
 chmod +x deploy_traefik_from_github.sh
 sudo bash deploy_traefik_from_github.sh <IP address of the scheduling server>
+
+# If you want deploy forwarding, Edit the configuration file (forwarding_config.toml)
+cd forwarding/cmd/
+# Run forwarding
+go run main.go
 
 ```
 

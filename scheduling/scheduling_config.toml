@@ -1,19 +1,19 @@
-# Configuration file for the Go application
+# Go application configuration file
 
-# Database connection details
+# Database connection
 [database]
 username = "root"
-password = "000000" # IMPORTANT: Change this to your actual password
+password = "000000" # IMPORTANT: Use your actual password
 dbname   = "system_info"
 
-# Data to be inserted into domain_origin table
-# This is an array of tables
+# domain_origin table data
+# The domain name you want to accelerate and the corresponding IP
 [[domain_origins]]
 domain    = "example.com"
 origin_ip = "192.168.1.100"
 
-# Data to be inserted into node_region table
-# This is an array of tables
+# node_region table data
+# The server IP of deploying the forwarding 
 [[node_regions]]
 ip          = "172.16.0.10"
 region      = "US-East"
@@ -25,7 +25,3 @@ ip          = "172.16.1.20"
 region      = "US-East"
 hostname    = "node-euw2-db01.mydatacenter.com"
 description = "Database replica in EU West"
-
-# Hostname and description are optional as per your table (can be NULL or empty)
-# hostname    = ""
-# description = ""

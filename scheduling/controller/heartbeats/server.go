@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net"
 	"os"
@@ -18,6 +17,8 @@ import (
 	"scheduling/controller/heartbeats/utils"
 	"syscall"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 type ServerConfig struct {

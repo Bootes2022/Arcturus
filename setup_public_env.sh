@@ -77,8 +77,8 @@ install_go() {
             echo "export PATH=\$PATH:${GO_INSTALL_PATH}/bin" >> ~/.profile
             # source ~/.profile # Avoid sourcing in script, user should do it or re-login
             rm "$GO_TARBALL"
-        elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
-            echo "Installing Go on CentOS/RHEL..."
+        elif [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]] || [[ "$OS" == *"AlmaLinux"* ]]; then
+            echo "Installing Go on CentOS/RHEL/AlmaLinux..."
             sudo yum install -y wget
             wget "$GO_DOWNLOAD_URL"
             sudo rm -rf "$GO_INSTALL_PATH"
@@ -125,7 +125,7 @@ install_etcd() {
 
     mkdir -p "$ETCD_DOWNLOAD_TEMP_DIR"
 
-    if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]] || [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]]; then
+    if [[ "$OS" == *"Ubuntu"* ]] || [[ "$OS" == *"Debian"* ]] || [[ "$OS" == *"CentOS"* ]] || [[ "$OS" == *"Red Hat"* ]] || [[ "$OS" == *"AlmaLinux"* ]]; then
         echo "Installing etcd on Linux..."
         wget -q -O "$ETCD_DOWNLOAD_TEMP_DIR/etcd.tar.gz" "$ETCD_DOWNLOAD_URL"
 
