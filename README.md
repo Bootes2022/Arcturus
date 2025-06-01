@@ -64,7 +64,7 @@ unzip main.zip && \
 mv Arcturus-main Arcturus && \
 rm main.zip
 
-cd /Arcturus
+cd Arcturus
 
 # Add execute permissions to all scripts that need to be run (one-time operation)
 chmod +x setup_public_env.sh
@@ -76,7 +76,7 @@ source ~/.profile
 
 # If you want deploy scheduling, run scheduling-specific environment setup
 ./scheduling/deploy_scheduling.sh
-# 
+# # If you want deploy scheduling, Edit the configuration file (scheduling_config.toml)
 cd scheduling/
 # Run scheduling
 sudo firewall-cmd --permanent --add-port=8080/tcp

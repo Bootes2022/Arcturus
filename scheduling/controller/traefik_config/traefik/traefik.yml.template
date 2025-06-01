@@ -1,32 +1,52 @@
-# traefik.yml.template
+# Traefik Static Configuration Template File
+# Uses placeholder __API_SERVER_IP_PLACEHOLDER__ to be replaced during deployment
 
-global:
-  checkNewVersion: true
-  sendAnonymousUsage: false
-
+# API and Dashboard Configuration
+api:
+  dashboard: true
+  insecure: true  # For production, it is recommended to set to false and configure TLS
+  
+# Entry Points Configuration
 entryPoints:
   web:
     address: ":80"
-  traefik: # For API and Dashboard
+  traefik:
     address: ":8080"
 
-api:
-  dashboard: true
-  insecure: true # For testing only
-
-log:
-  level: DEBUG # Or INFO for production
-
+# Providers Configuration
 providers:
-  # file: 
+  # HTTP Provider - Fetches dynamic configuration from a remote API
+  http:
+    endpoint: "http://__API_SERVER_IP_PLACEHOLDER__:8090/traefik-dynamic-config"
+    pollInterval: "10s"
+    pollTimeout: "5s"
+  
+  # File Provider - Fetches dynamic configuration from local files (alternative)
+  # If the HTTP provider connection fails, you can comment out the http configuration above and enable the file configuration below
+  # file:
   #   directory: "/etc/traefik/conf.d"
   #   watch: true
-  http:
-    endpoint: "http://__API_SERVER_IP_PLACEHOLDER__:8090/traefik-dynamic-config" 
-    pollInterval: "10s"
-    # pollTimeout: "5s"
 
+# Local Plugins Configuration - Uses corrected path structure
 experimental:
   localPlugins:
     myWeightedRedirector:
       moduleName: "weightedredirector"
+
+# Log Configuration
+log:
+  level: "INFO"  # Recommended to use INFO for production, DEBUG can be used for debugging
+  format: "common"
+
+# Global Configuration
+global:
+  checkNewVersion: true
+
+# Servers Transport Configuration
+serversTransport:
+  maxIdleConnsPerHost: 200
+
+# TCP Servers Transport Configuration
+tcpServersTransport:
+  dialTimeout: "30s"
+  dialKeepAlive: "15s"
