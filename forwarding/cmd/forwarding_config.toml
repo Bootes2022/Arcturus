@@ -1,6 +1,5 @@
 # Forwarding Module Configuration
 
 [metrics]
-# server_addr specifies the IP address and port for the metrics server.
-# Example: "127.0.0.1:8080" or "your_server_ip:port"
-server_addr = "142.250.190.78:80" 
+# The server IP of deploying the Scheduling module.
+server_addr = "142.250.190.78:8080" 

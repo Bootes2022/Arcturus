@@ -181,9 +181,10 @@ func (h *Handler) SyncMetrics(ctx context.Context, req *pb.SyncRequest) (*pb.Syn
 		}
 	}
 	regionAssessments := h.assessmentCalc.GetCachedAssessments()
+	log.Printf(" req.Metrics.Ip:%s  regionAssessments:%d ", req.Metrics.Ip, len(regionAssessments))
 	if len(regionAssessments) > 0 {
 		resp.RegionAssessments = regionAssessments
-		log.Printf(" %s  %d ", req.Metrics.Ip, len(regionAssessments))
+		log.Printf(" req.Metrics.Ip:%s  regionAssessments:%d ", req.Metrics.Ip, len(regionAssessments))
 	}
 	return resp, nil
 }

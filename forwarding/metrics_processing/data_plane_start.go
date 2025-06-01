@@ -92,14 +92,53 @@ func StartDataPlane(ctx context.Context, serverAddr string) {
 			if len(syncResp.RegionAssessments) > 0 {
 				nodeList := fileManager.GetNodeList()
 				if nodeList == nil {
-					log.Printf(": , ")
+					log.Printf("NodeList is nil, cannot process RegionAssessments.")
 				} else {
-					topology, err := to.ProcessRegionAssessments(syncResp.RegionAssessments, nodeList)
+					// 1. Process RegionAssessments to get the base topology
+					baseTopology, err := to.ProcessRegionAssessments(syncResp.RegionAssessments, nodeList)
 					if err != nil {
-						log.Printf(": %v", err)
+						log.Printf("Error processing RegionAssessments: %v", err)
 					} else {
+						// ---> Integrate local probe results
+						var currentNodeIP string
+						// collector2.GetIP() is correct as per imports.
+						ip, err := collector2.GetIP()
+						if err != nil {
+							log.Printf("Error getting current node IP via collector2.GetIP(): %v. Local probe integration might be skipped.", err)
+							// If current IP cannot be obtained, direct links cannot be added, but continue with topology based on RegionAssessments
+						} else {
+							currentNodeIP = ip
+							log.Printf("Current node IP for local probe integration: %s", currentNodeIP)
+
+							localProbeResults, err := probe.CollectRegionProbeResults(fileManager)
+							if err != nil {
+								log.Printf("Error collecting local probe results: %v", err)
+							} else {
+								if len(localProbeResults) > 0 {
+									log.Printf("Integrating %d region(s) of local probe results.", len(localProbeResults))
+									for _, regionResult := range localProbeResults {
+										if len(regionResult.IpProbes) > 0 {
+											log.Printf("Found %d IP probes in region '%s' from local results.", len(regionResult.IpProbes), regionResult.Region)
+											for _, probeEntry := range regionResult.IpProbes {
+												if probeEntry.TcpDelay >= 0 { // Valid probe
+													baseTopology.AddLink(currentNodeIP, probeEntry.TargetIp, float32(probeEntry.TcpDelay))
+													log.Printf("Added/Updated local direct link to topology: %s -> %s, delay: %dms", currentNodeIP, probeEntry.TargetIp, probeEntry.TcpDelay)
+												} else {
+													log.Printf("Skipping local probe link due to negative delay: %s -> %s, delay: %dms", currentNodeIP, probeEntry.TargetIp, probeEntry.TcpDelay)
+												}
+											}
+										}
+									}
+								} else {
+									log.Println("No local probe results to integrate.")
+								}
+							}
+						}
+						// <--- Integration of local probe results ends here
+
+						// topologyManager is from "forwarding/common" (imported as 't')
 						topologyManager := t.GetInstance()
-						topologyManager.SetTopology(topology)
+						topologyManager.SetTopology(baseTopology) // SetTopology will now process the graph including local links
 
 						network, ipToIndex, indexToIP, err := topologyManager.GetNetworkForKSP()
 						if err == nil {

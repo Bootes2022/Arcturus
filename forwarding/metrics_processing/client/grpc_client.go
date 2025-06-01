@@ -5,10 +5,11 @@ import (
 	"fmt"
 	protocol2 "forwarding/metrics_processing/protocol"
 	"forwarding/metrics_processing/storage"
-	"google.golang.org/grpc"
 	"log"
 	"strings"
 	"time"
+
+	"google.golang.org/grpc"
 )
 
 type GrpcClient struct {
