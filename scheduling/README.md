@@ -97,7 +97,8 @@ description = "Primary API server in US East"
 # description = "Primary API server in US East"
 ```
 
-### *** Finally, after starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
+### *** After starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
+### Finally, you can access http://[your traefik IP]/resolve/[your domain name]. For example, if your Traefik IP is 192.168.0.1 and the domain you want to accelerate is example.com, you can visit http://192.168.0.1/resolve/example.com.
 
 ## Database Schema
 
