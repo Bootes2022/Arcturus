@@ -97,7 +97,7 @@ description = "Primary API server in US East"
 # description = "Primary API server in US East"
 ```
 
-### ** Finally, after starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. **
+### *** Finally, after starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
 
 ## Database Schema
 
