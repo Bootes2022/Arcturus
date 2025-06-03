@@ -21,7 +21,7 @@ Without the Scheduling Plane running, no other component of the acceleration sys
 | go                | ≥1.23    | `go version `  |
 | MySQL    | ≥8.0     | `mysql --version`          |
 
-
+** The `​​setup.conf​​` file allows you to configure custom installation environment versions and database settings.
 
 ## Custom Settings
 
