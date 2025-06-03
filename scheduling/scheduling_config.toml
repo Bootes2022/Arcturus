@@ -18,10 +18,10 @@ origin_ip = "192.168.1.100"
 ip          = "172.16.0.10"
 region      = "US-East"
 hostname    = "node-use1-01.mydatacenter.com"
-description = "Primary API server in US East"
+description = "US-East node 1"
 
 [[node_regions]]
 ip          = "172.16.1.20"
 region      = "US-East"
-hostname    = "node-euw2-db01.mydatacenter.com"
-description = "Database replica in EU West"
+hostname    = "node-use2-02.mydatacenter.com"
+description = "US-East node 2"

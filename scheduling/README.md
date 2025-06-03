@@ -12,6 +12,94 @@ The Arcturus Scheduling Plane serves as the **central configuration and coordina
 
 Without the Scheduling Plane running, no other component of the acceleration system can function properly. It provides the foundation upon which all distributed operations are built.
 
+## Installation
+
+### Prerequisites
+
+| Requirement       | Version  | Verification Command       |
+|-------------------|----------|----------------------------|
+| go                | ≥1.23    | `go version `  |
+| MySQL    | ≥8.0     | `mysql --version`          |
+
+** The `​​setup.conf​​` file allows you to configure custom installation environment versions and database settings.
+
+## Custom Settings
+
+If you need to customize the deployment, you can modify the following parameters in the `scheduling_config.toml` file:
+
+## Configuration Structure
+
+```toml
+# Database Connection Settings
+
+# ***The database settings must be consistent with setup.conf to maintain proper database connectivity.
+[database]
+# Database username for application authentication
+username = "myapp_user"
+
+# Database password - should be kept secure and rotated periodically
+# Note: In production, consider using environment variables or a secrets manager
+password = "StrongAppUserPassword456!"
+
+# Name of the database the application will connect to
+dbname   = "myapp_db"
+
+# Domain Origin Configuration
+# Configure the domains you want to accelerate
+
+[[domain_origins]]
+# Domain name that needs acceleration (e.g., website or API endpoint)
+domain    = "example.com"
+
+# Origin server IP address where unaccelerated traffic would normally go
+# This server receives traffic when acceleration isn't available
+origin_ip = "192.168.1.100"
+
+# Node Region Configuration
+# Configure your data plane node clusters in node_regions.
+[[node_regions]]
+# Public IP address of the forwarding node
+ip          = "172.16.0.10"
+
+# Geographic region (used for latency-based routing)
+region      = "US-East"
+
+# Hostname/FQDN (used for internal DNS resolution)
+hostname    = "node-use1-01.mydatacenter.com"
+
+# Human-readable description
+description = "Primary API server in US East"
+
+[[node_regions]]
+ip          = "172.16.1.20"
+region      = "US-East"
+hostname    = "node-use2-02.mydatacenter.com"
+
+# Human-readable description
+description = "Primary API server in US East"
+
+```
+### Example Complete Configuration
+```toml
+# [database]
+# username = "myapp_user"
+# password = "StrongAppUserPassword456!"
+# dbname   = "myapp_db"
+
+# [[domain_origins]]
+# domain    = "example.com"
+# origin_ip = "192.168.1.100"
+
+# [[node_regions]]
+# ip          = "172.16.0.10"
+# region      = "US-East"
+# hostname    = "node-use1-01.mydatacenter.com"
+# description = "Primary API server in US East"
+```
+
+### *** After starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
+### Finally, you can access http://[your traefik IP]/resolve/[your domain name]. For example, if your Traefik IP is 192.168.0.1 and the domain you want to accelerate is example.com, you can visit http://192.168.0.1/resolve/example.com.
+
 ## Database Schema
 
 The Scheduling Plane relies on several database tables to maintain system state. **Before starting the system**, these tables must be properly initialized.
@@ -156,127 +244,30 @@ VALUES
 ('cdn.example.com', '10.0.1.7');
 ```
 
-## Installation
+### Domain config Table
 
-### Prerequisites
+This table is designed for the last mile, containing the overall request increase corresponding to each domain and the required redistribution ratio :
 
-| Requirement       | Version  | Verification Command       |
-|-------------------|----------|----------------------------|
-| go                | ≥1.23    | `go version `  |
-| MySQL    | ≥8.0     | `mysql --version`          |
-
-## Deployment Process Overview
-
-1. Download GitHub repository archive
-2. Extract the files
-3. Execute the deployment script
-
-## Detailed Steps
-
-### 1. Download GitHub Repository Archive
-
-First, we need to download the project archive from GitHub. You can download it directly on your server using the following commands:
-
-```bash
-# Create a temporary directory for download
-mkdir -p /tmp/deployment
-
-# Navigate to the temporary directory
-cd /tmp/deployment
-
-# Download GitHub repository archive (replace with your repository information)
-wget https://github.com/Bootes2022/Arcturus/scheduling.tar.gz -O scheduling.tar.gz
+```sql
+CREATE TABLE domain_config (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    domain_name VARCHAR(255) NOT NULL UNIQUE,
+    total_req_increment INT NOT NULL,
+    redistribution_proportion DOUBLE NOT NULL,
+    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 ```
 
-> Note: You need to replace `Bootes2022/Arcturus` with your actual repository path, and `main` with your desired branch name.
-
-### 2. Extract the Files
-
-Next, extract the downloaded archive:
-
-```bash
-# Extract tar.gz format archive
-tar -xzf scheduling.tar.gz
-
-# If you downloaded a zip format, use:
-# apt-get install unzip -y  # If unzip is not installed on your system
-# unzip arcturus.zip
+**Usage Example:**
+```sql
+INSERT INTO domain_config (domain_name, total_req_increment, redistribution_proportion)
+VALUES
+('example.com', 100, 0.5),
+('api.example.com', 500, 0.4),
+('cdn.example.com', 1000, 0.5);
 ```
 
-### 3. Execute the Deployment Script
 
-After extraction, navigate to the project directory and execute the deployment script:
-
-```bash
-# Navigate to the extracted directory (directory name may include branch name)
-cd scheduling
-
-# Ensure the deployment script has execution permissions
-chmod +x deploy_scheduling.sh
-
-# Execute the deployment script
-./deploy_scheduling.sh
-```
-
-## Deployment Script Functions
-
-The deployment script (`deploy.sh`) will automatically complete the following tasks:
-
-1. Install Go environment (if not already installed)
-2. Install MySQL database (if not already installed)
-3. Create necessary database and user
-4. Build the application
-5. Create configuration file
-6. Set up and start the system service
-
-## Post-Deployment Verification
-
-After deployment is complete, you can check the service status with the following command:
-
-```bash
-sudo systemctl status scheduling.service
-```
-
-The application will run on port 8080. You can check if it's listening properly with:
-
-```bash
-netstat -tulpn | grep 8080
-```
-
-## Custom Settings
-
-If you need to customize the deployment, you can modify the following parameters in the `deploy_scheduling.sh` file before executing the script:
-
-* `DEPLOY_DIR`: Deployment directory (default: /opt/scheduling)
-* `DB_NAME`: Database name (default: scheduling)
-* `DB_USER`: Database username (default: scheduling_user)
-* `DB_PASSWORD`: Database password (default: StrongPassword123!)
-
-For example:
-
-```bash
-# Change database password (recommended for production environments)
-sed -i 's/StrongPassword123!/YourSecurePassword456!/' deploy_scheduling.sh
-
-# Modify deployment directory
-sed -i 's|/opt/scheduling|/var/www/myapp|g' deploy_scheduling.sh
-```
-
-## Common Troubleshooting
-
-1. **Deployment script permission issues**:
-
-```bash
-chmod +x deploy_scheduling.sh
-```
-
-2. **Port in use**: If port 8080 is already in use, modify the port configuration in `config.toml`.
-
-3. **Service fails to start**: View logs for detailed error information:
-
-```bash
-sudo journalctl -u scheduling.service -n 50
-```
 
 ## License
 
