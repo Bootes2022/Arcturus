@@ -14,15 +14,10 @@ The Forwarding System is a distributed architecture where multiple nodes work co
 ## Custom Settings
 If you need to customize the deployment, you can modify the following parameters in the cmd/forwarding_config.toml file:
 
-```bash
-# Ensure you are in the root directory of the cloned Arcturus repository
-# cd Arcturus
-# Navigate to the forwarding directory
-cd forwarding
-
-# Install dependencies
-./deploy_forwarding.sh
-
+```toml
+[metrics]
+# The IP address of the server where the Scheduling module is deployed.
+server_addr = "<your scheduling ip>:8080" 
 ```
 
 #### etcd config
@@ -80,24 +75,24 @@ WantedBy=multi-user.target
 ########################
 # Core Algorithm Control
 ########################
-CPU_LOW_THRESHOLD <60>              # CPU low threshold (%). Example: 60. Used for phase differentiation.
-CPU_TARGET_THRESHOLD <20>           # Target CPU threshold (%). Example: 20. This is the queue backlog target.
-V_WEIGHT <0.001>                    # Latency weighting factor. Example: 0.001 (recommended range: 0.001-0.1).
-MAX_BPR_ITERATIONS <3>              # BPR maximum iterations. Example: 3 (recommended: 3-5).
+CPU_LOW_THRESHOLD <60>              # CPU low threshold (%), phase differentiation point
+CPU_TARGET_THRESHOLD <20>           # Target CPU threshold (%), queue backlog target
+V_WEIGHT <0.001>                    # Latency weighting factor (0.001-0.1 range)
+MAX_BPR_ITERATIONS <3>              # BPR max iterations (3-5 recommended)
 
 ########################
 # Dynamic Distribution
 ########################
-REDISTRIB_PROPORTION <0.3-0.7>      # Request redistribution proportion (range: 0.3-0.7).
-NON_MAIN_CLUSTER_BOOST <1.0-1.5>    # Non-main cluster score multiplier (range: 1.0-1.5).
-GAP_SCORE_BOOST <1.0-2.0>           # Data gap enhancement factor (range: 1.0-2.0).
+REDISTRIB_PROPORTION <0.3-0.7>      # Request redistribution proportion
+NON_MAIN_CLUSTER_BOOST <1.0-1.5>    # Non-main cluster score multiplier
+GAP_SCORE_BOOST <1.0-2.0>           # Data gap enhancement factor
 
 ########################
 # Monitoring Thresholds
 ########################
-CPU_ALERT_THRESHOLDS <60,70,80>     # CPU alert thresholds (comma-separated). Example: 60,70,80.
-MIN_VARIANCE <0.1>                  # Minimum CPU variance threshold. Example: 0.1.
-MAX_LATENCY <500>                   # Maximum latency threshold (ms). Example: 500.
+CPU_ALERT_THRESHOLDS <60,70,80>     # CPU alert thresholds (comma-separated)
+MIN_VARIANCE <0.1>                  # Minimum CPU variance threshold
+MAX_LATENCY <500>                   # Maximum latency threshold (ms)
 ```
 #### KNN config
 ```bash
@@ -106,39 +101,39 @@ MAX_LATENCY <500>                   # Maximum latency threshold (ms). Example: 5
 ########################
 # Anomaly Detection Core
 ########################
-SIGNIFICANT_GAP_MULTIPLIER <2.5>     # Gap detection sensitivity. Example: 2.5 (higher value reduces detection frequency).
-GAP_MAD_FLOOR <0.0001>               # Minimum gap median absolute deviation. Example: 0.0001.
-STD_DEV_FACTOR <2.0>                 # Standard deviation threshold multiplier. Example: 2.0.
-IQR_COEFFICIENT <1.5>                # IQR range coefficient. Example: 1.5 (default).
+SIGNIFICANT_GAP_MULTIPLIER <2.5>     # Gap detection sensitivity (higher reduces detection)
+GAP_MAD_FLOOR <0.0001>               # Minimum gap median absolute deviation
+STD_DEV_FACTOR <2.0>                 # Standard deviation threshold multiplier
+IQR_COEFFICIENT <1.5>                # IQR range coefficient (1.5 default)
 
 ########################
 # Large Value Handling
 ########################
-LARGE_VALUE_ADJUSTMENT <1.7>         # Large value standard deviation adjustment. Example: 1.7.
-ABSOLUTE_LARGE_THRESHOLD <100>       # Absolute large value threshold. Example: 100.
-LARGE_RELATIVE_RATIO <1.8>           # Mean relative ratio threshold for large values. Example: 1.8.
+LARGE_VALUE_ADJUSTMENT <1.7>         # Large value std dev adjustment
+ABSOLUTE_LARGE_THRESHOLD <100>       # Absolute large value threshold
+LARGE_RELATIVE_RATIO <1.8>           # Mean relative ratio threshold
 
 ########################
 # Score Calculation
 ########################
-SMALL_DEVIATION_EXP <1.2>            # Exponent for small anomalies. Example: 1.2 (>1 amplifies score).
-LARGE_DEVIATION_EXP <1.3>            # Exponent for large anomalies. Example: 1.3 (>1 amplifies score).
-GAP_SCORE_BOOST <1.3>                # Score boost for neighboring gaps. Example: 1.3.
-RANGE_OUTLIER_BOOST <1.8>            # Score boost for out-of-cluster range. Example: 1.8.
+SMALL_DEVIATION_EXP <1.2>            # Small anomaly exponent (>1 amplifies)
+LARGE_DEVIATION_EXP <1.3>            # Large anomaly exponent (>1 amplifies)
+GAP_SCORE_BOOST <1.3>                # Neighboring gap score boost
+RANGE_OUTLIER_BOOST <1.8>            # Out-of-cluster range boost
 
 ########################
 # Cluster Identification
 ########################
-CLUSTER_SIZE_WEIGHT <0.6>            # Cluster size weight (range: 0-1). Example: 0.6.
-CLUSTER_POSITION_WEIGHT <0.25>       # Central position weight (range: 0-1). Example: 0.25.
-CLUSTER_DENSITY_WEIGHT <0.15>        # Density score weight (range: 0-1). Example: 0.15.
-NON_MAIN_CLUSTER_BOOST <1.2>         # Non-main cluster multiplier. Example: 1.2.
+CLUSTER_SIZE_WEIGHT <0.6>            # Cluster size weight (0-1 range)
+CLUSTER_POSITION_WEIGHT <0.25>       # Central position weight (0-1)
+CLUSTER_DENSITY_WEIGHT <0.15>        # Density score weight (0-1)
+NON_MAIN_CLUSTER_BOOST <1.2>         # Non-main cluster multiplier
 
 ########################
 # General Configuration
 ########################
-MINIMUM_SCORE <1.0>                  # Base score for all anomalies. Example: 1.0.
-SENSITIVITY <1.0>                    # Global sensitivity multiplier. Example: 1.0 (1.0: neutral, >1: more sensitive, <1: less sensitive).
+MINIMUM_SCORE <1.0>                  # Base score for all anomalies
+SENSITIVITY <1.0>                    # Global sensitivity multiplier (>1: sensitive)
 ```
 
 

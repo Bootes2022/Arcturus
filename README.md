@@ -74,9 +74,10 @@ source ~/.profile
 
 # To deploy scheduling, run the scheduling-specific environment setup
 ./scheduling/deploy_scheduling.sh
-# To deploy scheduling, edit the configuration file (scheduling_config.toml)
+# To deploy scheduling, edit the configuration file (scheduling_config.toml),please refer to the scheduling README.md
 cd scheduling/
 # Start the scheduling service
+# Ensure firewall rules for scheduling are applied
 sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --permanent --add-port=8090/tcp
 sudo firewall-cmd --reload
@@ -93,16 +94,17 @@ sudo firewall-cmd --reload
 # Replace <scheduling_server_ip> with the actual IP address of your scheduling server
 sudo bash deploy_traefik_from_github.sh <scheduling_server_ip>
 
-# To deploy forwarding, edit the configuration file (forwarding_config.toml)
+# To deploy forwarding, edit the configuration file (forwarding_config.toml),please refer to the forwarding README.md
 cd forwarding/cmd/
 # Start the forwarding service
+# Ensure firewall rules for forwarding are applied
 sudo firewall-cmd --permanent --add-port=50050-50059/tcp
 sudo firewall-cmd --reload
 go run main.go
 
 ```
 
-• [Scheduling](./scheduling/README.md) - Details for the scheduling plane            
+• [Scheduling](./scheduling/README.md) - Details for the scheduling plane
 • [Forwarding](./forwarding/README.md) - Details for the forwarding plane
 
 ## License Agreement
