@@ -2,15 +2,15 @@
 
 ## Overview
 
-The Arcturus Scheduling Plane serves as the **central configuration and coordination hub** for the entire acceleration system. It is the critical component that must be initialized first during system startup, as it manages global system configuration, node registration, and orchestrates the entire distributed acceleration infrastructure. The **Scheduling Plane** is the brain of the Arcturus acceleration system. As the primary configuration center, it:
+The Arcturus Scheduling Plane is the central configuration and coordination hub for the acceleration system. As a critical component, it must be initialized first during system startup. It manages global system configuration, node registration, and orchestrates the distributed acceleration infrastructure. The Scheduling Plane acts as the brain of the Arcturus system, responsible for:
 
-- **Initializes and registers** all proxy and controller nodes in the network
-- **Manages system-wide configuration** and policy distribution
-- **Coordinates real-time path selection** and traffic routing decisions
-- **Collects and aggregates** performance metrics from all nodes
-- **Maintains the global view** of network topology and health status
+- Initializing and registering all proxy and controller nodes in the network.
+- Managing system-wide configuration and policy distribution.
+- Coordinating real-time path selection and traffic routing decisions.
+- Collecting and aggregating performance metrics from all nodes.
+- Maintaining a global view of the network topology and health status.
 
-Without the Scheduling Plane running, no other component of the acceleration system can function properly. It provides the foundation upon which all distributed operations are built.
+If the Scheduling Plane is not running, other components of the acceleration system cannot function properly. It provides the foundation upon which all distributed operations are built.
 
 ## Installation
 
@@ -111,7 +111,7 @@ Stores basic information about all nodes in the system:
 ```sql
 CREATE TABLE node_region (
    id INT AUTO_INCREMENT PRIMARY KEY,
-   ip VARCHAR(50) NOT NULL UNIQUE COMMENT 'Node IP address',
+   ip VARCHAR(45) NOT NULL UNIQUE COMMENT 'Node IP address (IPv4 or IPv6)',
    region VARCHAR(50) NOT NULL COMMENT 'Node region identifier',
    hostname VARCHAR(100) COMMENT 'Node hostname',
    description VARCHAR(255) COMMENT 'Node description',
@@ -135,7 +135,7 @@ Captures detailed hardware and performance metrics for each node:
 ```sql
 CREATE TABLE system_info (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    ip VARCHAR(45) NOT NULL,
+    ip VARCHAR(45) NOT NULL COMMENT 'Node IP address (IPv4 or IPv6)',
     cpu_cores INT NOT NULL,
     cpu_model_name VARCHAR(255) NOT NULL,
     cpu_mhz FLOAT NOT NULL,
@@ -181,9 +181,9 @@ Records network latency measurements between regions:
 ```sql
 CREATE TABLE region_probe_info (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    source_ip VARCHAR(15) NOT NULL,
+    source_ip VARCHAR(45) NOT NULL COMMENT 'Source node IP (IPv4 or IPv6)',
     source_region VARCHAR(50) NOT NULL,
-    target_ip VARCHAR(15) NOT NULL,
+    target_ip VARCHAR(45) NOT NULL COMMENT 'Target node IP (IPv4 or IPv6)',
     target_region VARCHAR(50) NOT NULL,
     tcp_delay INT NOT NULL,
     probe_time DATETIME NOT NULL
@@ -205,8 +205,8 @@ Maintains detailed link quality information for path optimization:
 ```sql
 CREATE TABLE network_metrics (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    source_ip VARCHAR(15) NOT NULL,
-    destination_ip VARCHAR(15) NOT NULL,
+    source_ip VARCHAR(45) NOT NULL COMMENT 'Source node IP (IPv4 or IPv6)',
+    destination_ip VARCHAR(45) NOT NULL COMMENT 'Destination node IP (IPv4 or IPv6)',
     link_latency FLOAT NOT NULL,
     cpu_mean FLOAT NOT NULL,
     cpu_variance FLOAT NOT NULL,
@@ -229,8 +229,8 @@ Maps domain names to their origin servers:
 
 ```sql
 CREATE TABLE domain_origin (
-    domain VARCHAR(20) PRIMARY KEY,
-    origin_ip VARCHAR(20) NOT NULL,
+    domain VARCHAR(255) PRIMARY KEY COMMENT 'Domain name',
+    origin_ip VARCHAR(45) NOT NULL COMMENT 'Origin server IP (IPv4 or IPv6)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
@@ -244,18 +244,112 @@ VALUES
 ('cdn.example.com', '10.0.1.7');
 ```
 
-### Domain config Table
 
-This table is designed for the last mile, containing the overall request increase corresponding to each domain and the required redistribution ratio :
+## Installation
 
-```sql
-CREATE TABLE domain_config (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    domain_name VARCHAR(255) NOT NULL UNIQUE,
-    total_req_increment INT NOT NULL,
-    redistribution_proportion DOUBLE NOT NULL,
-    last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+### Prerequisites
+
+| Requirement       | Version  | Verification Command       |
+|-------------------|----------|----------------------------|
+| go                | ≥1.22    | `go version`               |
+| MySQL             | ≥8.0     | `mysql --version`          |
+
+## Deployment Process Overview
+
+1. Download GitHub repository archive
+2. Extract the files
+3. Execute the deployment script
+
+## Detailed Steps
+
+### 1. Download GitHub Repository Archive
+
+First, download the project archive from GitHub. You can use a command like `wget` or download it via your browser.
+
+```bash
+# Create a temporary directory for download (optional)
+# mkdir -p /tmp/arcturus_download
+# cd /tmp/arcturus_download
+
+# Download the main repository archive (e.g., main branch as a zip file)
+wget https://github.com/Bootes2022/Arcturus/archive/refs/heads/main.zip -O Arcturus-main.zip
+```
+
+> Note: Replace `Bootes2022/Arcturus` with the correct repository path if it differs.
+> The downloaded file might be named `Arcturus-main.zip` if downloading the main branch.
+
+### 2. Extract the Files
+
+Next, extract the downloaded archive:
+
+```bash
+# If you downloaded a zip format (e.g., Arcturus-main.zip):
+unzip Arcturus-main.zip
+# This will likely create a directory like Arcturus-main
+
+# If you downloaded a tar.gz format archive (e.g., Arcturus-main.tar.gz), use:
+# tar -xzf Arcturus-main.tar.gz
+```
+
+### 3. Execute the Deployment Script
+
+After extraction, navigate to the `scheduling` project directory and execute the deployment script:
+
+```bash
+# Navigate to the extracted directory, then into the scheduling subdirectory
+# Adjust the path if your downloaded archive extracts to a different top-level directory name
+cd Arcturus-main/scheduling 
+
+# Ensure the deployment script has execution permissions
+chmod +x deploy_scheduling.sh
+
+# Execute the deployment script
+./deploy_scheduling.sh
+```
+
+## Deployment Script Functions
+
+The deployment script (`deploy_scheduling.sh`) will automatically complete the following tasks:
+
+1. Install Go environment (if not already installed)
+2. Install MySQL database (if not already installed)
+3. Create the necessary database and user
+4. Build the application
+5. Create configuration file
+6. Set up and start the system service
+
+## Post-Deployment Verification
+
+After deployment is complete, you can check the service status with the following command:
+
+```bash
+sudo systemctl status scheduling.service
+```
+
+The application will run on port 8080. You can check if it's listening properly with:
+
+```bash
+netstat -tulpn | grep 8080
+```
+
+## Custom Settings
+
+If you need to customize the deployment, you can modify the following parameters in the `deploy_scheduling.sh` file before executing the script:
+
+* `DEPLOY_DIR`: Deployment directory (default: /opt/scheduling)
+* `DB_NAME`: Database name (default: scheduling)
+* `DB_USER`: Database username (default: scheduling_user)
+* `DB_PASSWORD`: Database password (default: StrongPassword123!)
+
+For example:
+
+```bash
+# Change database password (recommended for production environments)
+sed -i 's/StrongPassword123!/YourSecurePassword456!/' deploy_scheduling.sh
+
+# Modify deployment directory
+sed -i 's|/opt/scheduling|/var/www/myapp|g' deploy_scheduling.sh
+
 ```
 
 **Usage Example:**
