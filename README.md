@@ -1,20 +1,18 @@
-
-
 # Arcturus 🌌  
 *A Cloud-Native Global Accelerator Framework*
 
 
 
 ## 📌 Overview  
-**Arcturus** redefines **Global Acceleration (GA)** by dynamically orchestrating low-cost, multi-cloud resources to deliver **high-performance, low-latency, and highly stable networking** — all without the constraints of vendor lock-in. Unlike traditional cloud-tied GA solutions, Arcturus achieves **1.7× faster acceleration at 71% lower cost** on the forwarding plane, while sustaining over **80% resource efficiency**, significantly boosting both performance and stability at the data plane level. On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud infrastructure and the dynamic behavior of acceleration workloads*, and based on these insights, *designs specialized scheduling strategies*. It combines **last-mile scheduling based on Lyapunov optimization** with **mid-mile scheduling formulated as a constrained maximum flow problem**, jointly optimizing acceleration performance and system stability to achieve **Pareto-optimal efficiency** across diverse network conditions.
+**Arcturus** redefines **Global Acceleration (GA)** by dynamically orchestrating low-cost, multi-cloud resources to deliver **high-performance, low-latency, and highly stable networking** — all without the constraints of vendor lock-in. Unlike traditional cloud-vendor-specific GA solutions, Arcturus achieves **1.7× faster acceleration at 71% lower cost** on the forwarding plane, while sustaining over **80% resource efficiency**, significantly boosting both performance and stability at the data plane level. On the scheduling plane, Arcturus *analyzes the heterogeneity of hybrid-cloud infrastructure and the dynamic behavior of acceleration workloads*, and based on these insights, *designs specialized scheduling strategies*. It combines **last-mile scheduling based on Lyapunov optimization** with **mid-mile scheduling formulated as a constrained maximum flow problem**, jointly optimizing acceleration performance and system stability to achieve **Pareto-optimal efficiency** across diverse network conditions.
 
 
 ## ✨ Key Features  
 | **Feature**               | **Advantage**                                                                 |
 |---------------------------|-------------------------------------------------------------------------------|
-| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources (AWS, Vultr, etc.) to cut system costs by over 70% |
-| **High Performance**  | 1.7× faster acceleration​​ via streaming multiplexing, packet merging, and CMAB tuning |
-| **​​Hybrid Scheduling​**| Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
+| **Multi-Cloud Adaptive**  | Leverages heterogeneous resources (AWS, Vultr, etc.) to reduce system costs by over 70% |
+| **High Performance**  | 1.7× faster acceleration via streaming multiplexing, packet merging, and CMAB tuning |
+| **Hybrid Scheduling** | Lyapunov-based load balancing (last-mile) + Carousel Greedy for path diversity (mid-mile) |
 
 ## 🏆 Comparative Metrics
 ### Public Internet vs Arcturus Latency Comparison
@@ -51,8 +49,8 @@
 
 2. **Proxy Nodes**: Edge nodes that:
    - Receive and implement controller-distributed forwarding policies
-   - ​​Execute localized routing decisions
-   - ​​Process traffic flows with policy enforcement
+   - Execute localized routing decisions
+   - Process traffic flows with policy enforcement
    - Report real-time performance telemetry to controllers
 
 ![Scheduling Architecture](scheduling/assets/process.svg)
@@ -66,7 +64,7 @@ rm main.zip
 
 cd Arcturus
 
-# Add execute permissions to all scripts that need to be run (one-time operation)
+# Grant execute permissions to necessary scripts (one-time operation)
 chmod +x setup_public_env.sh
 chmod +x scheduling/deploy_scheduling.sh
 
@@ -74,37 +72,39 @@ chmod +x scheduling/deploy_scheduling.sh
 ./setup_public_env.sh
 source ~/.profile
 
-# If you want deploy scheduling, run scheduling-specific environment setup
+# To deploy scheduling, run the scheduling-specific environment setup
 ./scheduling/deploy_scheduling.sh
-# # If you want deploy scheduling, Edit the configuration file (scheduling_config.toml)
+# To deploy scheduling, edit the configuration file (scheduling_config.toml)
 cd scheduling/
-# Run scheduling
+# Start the scheduling service
 sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --permanent --add-port=8090/tcp
 sudo firewall-cmd --reload
 go run main.go
 
-# If you want deploy traefik, run traefik-specific environment setup
+# To deploy Traefik, run the Traefik-specific environment setup
 cd scheduling/controller/traefik_config/traefik
 chmod +x deploy_traefik_from_github.sh
 source ~/.profile
+# Ensure firewall rules for Traefik are applied
 sudo firewall-cmd --permanent --add-port=8080/tcp
 sudo firewall-cmd --permanent --add-port=80/tcp
 sudo firewall-cmd --reload
-sudo bash deploy_traefik_from_github.sh <IP address of the scheduling server>
+# Replace <scheduling_server_ip> with the actual IP address of your scheduling server
+sudo bash deploy_traefik_from_github.sh <scheduling_server_ip>
 
 
-# If you want deploy forwarding, Edit the configuration file (forwarding_config.toml)
+# To deploy forwarding, edit the configuration file (forwarding_config.toml)
 cd forwarding/cmd/
-# Run forwarding
+# Start the forwarding service
 sudo firewall-cmd --permanent --add-port=50050-50059/tcp
 sudo firewall-cmd --reload
 go run main.go
 
 ```
 
-• [Scheduling ](./scheduling/README.md) - Details for the scheduling plane            
-• [Forwarding ](./forwarding/README.md) - Details for the forwarding plane
+• [Scheduling](./scheduling/README.md) - Details for the scheduling plane            
+• [Forwarding](./forwarding/README.md) - Details for the forwarding plane
 
 ## License Agreement
 
@@ -117,5 +117,5 @@ Permits:
 
 Requirements:
 - ℹ️ License and copyright notice preservation  
-- ℹ️ State changes  
+- ℹ️ Indicate changes made  
 
