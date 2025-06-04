@@ -12,6 +12,94 @@ The Arcturus Scheduling Plane is the central configuration and coordination hub 
 
 If the Scheduling Plane is not running, other components of the acceleration system cannot function properly. It provides the foundation upon which all distributed operations are built.
 
+## Installation
+
+### Prerequisites
+
+| Requirement       | Version  | Verification Command       |
+|-------------------|----------|----------------------------|
+| go                | ≥1.23    | `go version `  |
+| MySQL    | ≥8.0     | `mysql --version`          |
+
+** The `​​setup.conf​​` file allows you to configure custom installation environment versions and database settings.
+
+## Custom Settings
+
+If you need to customize the deployment, you can modify the following parameters in the `scheduling_config.toml` file:
+
+## Configuration Structure
+
+```toml
+# Database Connection Settings
+
+# ***The database settings must be consistent with setup.conf to maintain proper database connectivity.
+[database]
+# Database username for application authentication
+username = "myapp_user"
+
+# Database password - should be kept secure and rotated periodically
+# Note: In production, consider using environment variables or a secrets manager
+password = "StrongAppUserPassword456!"
+
+# Name of the database the application will connect to
+dbname   = "myapp_db"
+
+# Domain Origin Configuration
+# Configure the domains you want to accelerate
+
+[[domain_origins]]
+# Domain name that needs acceleration (e.g., website or API endpoint)
+domain    = "example.com"
+
+# Origin server IP address where unaccelerated traffic would normally go
+# This server receives traffic when acceleration isn't available
+origin_ip = "192.168.1.100"
+
+# Node Region Configuration
+# Configure your data plane node clusters in node_regions.
+[[node_regions]]
+# Public IP address of the forwarding node
+ip          = "172.16.0.10"
+
+# Geographic region (used for latency-based routing)
+region      = "US-East"
+
+# Hostname/FQDN (used for internal DNS resolution)
+hostname    = "node-use1-01.mydatacenter.com"
+
+# Human-readable description
+description = "Primary API server in US East"
+
+[[node_regions]]
+ip          = "172.16.1.20"
+region      = "US-East"
+hostname    = "node-use2-02.mydatacenter.com"
+
+# Human-readable description
+description = "Primary API server in US East"
+
+```
+### Example Complete Configuration
+```toml
+# [database]
+# username = "myapp_user"
+# password = "StrongAppUserPassword456!"
+# dbname   = "myapp_db"
+
+# [[domain_origins]]
+# domain    = "example.com"
+# origin_ip = "192.168.1.100"
+
+# [[node_regions]]
+# ip          = "172.16.0.10"
+# region      = "US-East"
+# hostname    = "node-use1-01.mydatacenter.com"
+# description = "Primary API server in US East"
+```
+
+### *** After starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
+### Finally, you can access http://[your traefik IP]/resolve/[your domain name]. For example, if your Traefik IP is 192.168.0.1 and the domain you want to accelerate is example.com, you can visit http://192.168.0.1/resolve/example.com.
+
 ## Database Schema
 
 The Scheduling Plane relies on several database tables to maintain system state. **Before starting the system**, these tables must be properly initialized.
@@ -156,6 +244,7 @@ VALUES
 ('cdn.example.com', '10.0.1.7');
 ```
 
+
 ## Installation
 
 ### Prerequisites
@@ -260,23 +349,19 @@ sed -i 's/StrongPassword123!/YourSecurePassword456!/' deploy_scheduling.sh
 
 # Modify deployment directory
 sed -i 's|/opt/scheduling|/var/www/myapp|g' deploy_scheduling.sh
+
 ```
 
-## Common Troubleshooting
-
-1. **Deployment script permission issues**:
-
-```bash
-chmod +x deploy_scheduling.sh
+**Usage Example:**
+```sql
+INSERT INTO domain_config (domain_name, total_req_increment, redistribution_proportion)
+VALUES
+('example.com', 100, 0.5),
+('api.example.com', 500, 0.4),
+('cdn.example.com', 1000, 0.5);
 ```
 
-2. **Port in use**: If port 8080 is already in use, modify the port configuration in `config.toml`.
 
-3. **Service fails to start**: View logs for detailed error information:
-
-```bash
-sudo journalctl -u scheduling.service -n 50
-```
 
 ## License
 

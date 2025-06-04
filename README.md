@@ -93,7 +93,6 @@ sudo firewall-cmd --reload
 # Replace <scheduling_server_ip> with the actual IP address of your scheduling server
 sudo bash deploy_traefik_from_github.sh <scheduling_server_ip>
 
-
 # To deploy forwarding, edit the configuration file (forwarding_config.toml)
 cd forwarding/cmd/
 # Start the forwarding service

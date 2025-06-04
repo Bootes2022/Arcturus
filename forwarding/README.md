@@ -4,7 +4,6 @@
 
 The Forwarding System is a distributed architecture where multiple nodes work collaboratively to forward network traffic efficiently. Each node in the system deploys forwarding functionality and participates in a coordinated network that ensures optimal data transmission across different geographical locations.
 
-## Getting Started
 
 ### Prerequisites
 
@@ -12,7 +11,8 @@ The Forwarding System is a distributed architecture where multiple nodes work co
 - Linux-based operating system
 - Network access between all forwarding nodes
 
-### Installation
+## Custom Settings
+If you need to customize the deployment, you can modify the following parameters in the cmd/forwarding_config.toml file:
 
 ```bash
 # Ensure you are in the root directory of the cloned Arcturus repository
@@ -22,9 +22,9 @@ cd forwarding
 
 # Install dependencies
 ./deploy_forwarding.sh
+
 ```
 
-### Configuration
 #### etcd config
 ```bash
 
@@ -141,27 +141,6 @@ MINIMUM_SCORE <1.0>                  # Base score for all anomalies. Example: 1.
 SENSITIVITY <1.0>                    # Global sensitivity multiplier. Example: 1.0 (1.0: neutral, >1: more sensitive, <1: less sensitive).
 ```
 
-### Running the System
-
-```bash
-# Start the forwarding service
-./forwarding-node start
-
-# Check status
-./forwarding-node status
-
-# View logs
-tail -f logs/forwarding.log
-```
-
-## Monitoring
-
-The system provides comprehensive monitoring through:
-- Real-time metrics dashboard
-- Historical performance data
-- Alert configuration for anomaly detection
-
-Access the monitoring dashboard at: `http://localhost:8080/metrics`
 
 ## Contributing
 
