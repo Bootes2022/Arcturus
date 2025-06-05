@@ -2,9 +2,11 @@ package config
 
 // Config holds the overall configuration structure mapping to conf.toml
 type Config struct {
-	Database      DatabaseConfig      `toml:"database"`
-	DomainOrigins []DomainOriginEntry `toml:"domain_origins"`
-	NodeRegions   []NodeRegionEntry   `toml:"node_regions"`
+	Database             DatabaseConfig            `toml:"database"`
+	DomainOrigins        []DomainOriginEntry       `toml:"domain_origins"`
+	NodeRegions          []NodeRegionEntry         `toml:"node_regions"`
+	DomainConfigurations []DomainConfigEntry       `toml:"domain_config"`
+	BPRSchedulingTasks   []BPRSchedulingTaskConfig `toml:"bpr_scheduling_task"`
 }
 
 // DatabaseConfig holds database connection parameters
@@ -26,6 +28,20 @@ type NodeRegionEntry struct {
 	Region      string `toml:"region"`
 	Hostname    string `toml:"hostname,omitempty"`    // omitempty if the field might be missing in TOML
 	Description string `toml:"description,omitempty"` // omitempty if the field might be missing in TOML
+}
+
+// DomainConfigEntry maps to one [[DomainConfigurations]] item in TOML
+type DomainConfigEntry struct {
+	DomainName               string  `toml:"DomainName"`
+	TotalReqIncrement        int     `toml:"TotalReqIncrement"`
+	RedistributionProportion float64 `toml:"RedistributionProportion"`
+}
+
+// BPRSchedulingTaskConfig maps to one [[BPRSchedulingTasks]] item in TOML
+type BPRSchedulingTaskConfig struct {
+	DomainName      string `toml:"DomainName"`
+	Region          string `toml:"Region"`
+	IntervalSeconds int    `toml:"IntervalSeconds"`
 }
 
 type ProbeResult struct {
