@@ -19,10 +19,10 @@ DomainName               = "example.com"
 TotalReqIncrement        = 100
 RedistributionProportion = 0.5
 
-[[DomainConfigurations]]
-DomainName              = "another.example.net"
-TotalReqIncrement       = 50
-RedistributionProportion = 0.2
+#[[DomainConfigurations]]
+#DomainName              = "another.example.net"
+#otalReqIncrement       = 50
+#RedistributionProportion = 0.2
 
 # Define Last-mile scheduling tasks to be started
 # This tells the application for which (domain, region) combinations to start Last-mile
@@ -31,10 +31,10 @@ DomainName = "example.com"
 Region     = "US-East"
 IntervalSeconds = 10 # Scheduling interval in seconds (e.g., 10s)
 
-[[BPRSchedulingTasks]]
-DomainName = "another.example.net"
-Region     = "US-East" # Assuming this domain is also scheduled for US-East
-IntervalSeconds = 15
+#[[BPRSchedulingTasks]]
+#DomainName = "another.example.net"
+#Region     = "US-East" # Assuming this domain is also scheduled for US-East
+#IntervalSeconds = 15
 
 # node_region table data
 # The server IP of deploying the forwarding 

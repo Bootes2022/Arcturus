@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"scheduling/config"
 	"scheduling/controller/heartbeats"
-	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/controller/last_mile_scheduling/bpr"
 	traefik_config "scheduling/controller/traefik_config/config_provider"
 	"scheduling/middleware"
@@ -40,13 +39,6 @@ func main() {
 	cfg, _ := middleware.LoadConfig("scheduling_config.toml")
 	db := middleware.ConnectToDB(cfg.Database)
 
-	// Get BPR parameters
-	paramsChannel := make(chan lms.SubmittedParams, 10)
-	if err := lms.FetchUserData(db, paramsChannel); err != nil {
-		log.Fatalf("Failed to start FetchUserData: %v", err)
-	}
-	log.Println("FetchUserData server is running in the background.")
-
 	// Insert domain origin data
 	if err := models.InsertDomainOrigins(db, cfg.DomainOrigins); err != nil {
 		log.Printf("Error during domain_origin insertion: %v", err)
@@ -71,7 +63,7 @@ func main() {
 		log.Println("No DomainConfigurations found in config.")
 		return
 	}
-	// Start heartbeats server (pass context)
+	// Start heartbeats server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
