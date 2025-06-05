@@ -12,6 +12,30 @@ dbname   = "myapp_db"
 domain    = "example.com"
 origin_ip = "192.168.1.100"
 
+# domain_config table data
+# The parameters that need to be configured for the last-mile scheduling algorithm
+[[DomainConfigurations]]
+DomainName               = "example.com"
+TotalReqIncrement        = 100
+RedistributionProportion = 0.5
+
+[[DomainConfigurations]]
+DomainName              = "another.example.net"
+TotalReqIncrement       = 50
+RedistributionProportion = 0.2
+
+# Define Last-mile scheduling tasks to be started
+# This tells the application for which (domain, region) combinations to start Last-mile
+[[BPRSchedulingTasks]]
+DomainName = "example.com"
+Region     = "US-East"
+IntervalSeconds = 10 # Scheduling interval in seconds (e.g., 10s)
+
+[[BPRSchedulingTasks]]
+DomainName = "another.example.net"
+Region     = "US-East" # Assuming this domain is also scheduled for US-East
+IntervalSeconds = 15
+
 # node_region table data
 # The server IP of deploying the forwarding 
 [[node_regions]]
@@ -25,3 +49,4 @@ ip          = "172.16.1.20"
 region      = "US-East"
 hostname    = "node-use2-02.mydatacenter.com"
 description = "US-East node 2"
+

@@ -1,6 +1,7 @@
 package bpr
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"scheduling/models"
@@ -104,7 +105,7 @@ func UpdateNodeQueueBacklog(ip string, newQueueBacklog float64) {
 }
 
 // ScheduleBPRRuns schedules BPR runs and stores their map results.
-func ScheduleBPRRuns(db *sql.DB, interval time.Duration, domainName string, region string) {
+/*func ScheduleBPRRuns(db *sql.DB, interval time.Duration, domainName string, region string) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
@@ -147,6 +148,45 @@ func ScheduleBPRRuns(db *sql.DB, interval time.Duration, domainName string, regi
 			// If config can change, re-fetch it here:
 			// totalReqIncrement, redistributionProportion, err = GetDomainConfigValues(db, domainName)
 			// if err != nil { ... handle error ... }
+		}
+	}
+}
+*/
+
+func ScheduleBPRRuns(ctx context.Context, db *sql.DB, interval time.Duration, domainName string, region string) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	runAndStoreBprResult := func() {
+		totalReqIncrement, redistributionProportion, err := models.GetDomainConfigValues(db, domainName)
+		if err != nil {
+			log.Printf("Error fetching domain config for '%s' during BPR run: %v. Skipping this run.", domainName, err)
+			return
+		}
+		log.Printf("Attempting BPR run for domain '%s', region '%s' with Increment=%d, Proportion=%.2f...",
+			domainName, region, totalReqIncrement, redistributionProportion)
+		bprResultMap, bprErr := Bpr(db, region, totalReqIncrement, redistributionProportion) // bprResultMap is map[string]int
+		if bprErr != nil {
+			log.Printf("Error during BPR run for domain '%s', region '%s': %v", domainName, region, bprErr)
+			return
+		}
+		bprResultsMutex.Lock()
+		bprResultsCache[domainName+"_"+region] = bprResultMap
+		bprResultsMutex.Unlock()
+		log.Printf("BPR run for domain '%s', region '%s' completed and result (map) stored.", domainName, region)
+	}
+	log.Printf("BPR scheduler started for domain %s, region %s. Interval: %v. Performing initial run...", domainName, region, interval)
+	runAndStoreBprResult()
+	log.Printf("Initial BPR run for domain '%s', region '%s' processing done.", domainName, region)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Printf("BPR scheduler for domain %s, region %s stopping due to context cancellation.", domainName, region)
+			return
+		case <-ticker.C:
+			log.Printf("Ticker triggered: Starting scheduled BPR run for domain '%s', region '%s'...", domainName, region)
+			runAndStoreBprResult()
+			log.Printf("Scheduled BPR run for domain '%s', region '%s' processing done.", domainName, region)
 		}
 	}
 }

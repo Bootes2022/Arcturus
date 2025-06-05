@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"scheduling/config"
 	"scheduling/controller/heartbeats"
 	lms "scheduling/controller/last_mile_scheduling"
 	"scheduling/controller/last_mile_scheduling/bpr"
@@ -60,7 +60,17 @@ func main() {
 	} else {
 		log.Println("Node regions processing completed.")
 	}
-
+	if cfg.DomainConfigurations != nil {
+		for _, dc := range cfg.DomainConfigurations {
+			err := models.SaveOrUpdateDomainConfig(db, dc.DomainName, dc.TotalReqIncrement, dc.RedistributionProportion)
+			if err != nil {
+				log.Printf("Error saving domain configuration for '%s' from config: %v", dc.DomainName, err)
+			}
+		}
+	} else {
+		log.Println("No DomainConfigurations found in config.")
+		return
+	}
 	// Start heartbeats server (pass context)
 	wg.Add(1)
 	go func() {
@@ -69,30 +79,34 @@ func main() {
 		log.Println("Heartbeats server stopped.")
 	}()
 
-	// Start parameter processing goroutine
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				log.Println("Parameter processing stopped.")
-				return
-			case params, ok := <-paramsChannel:
-				if !ok {
-					log.Println("[Main App] Parameter channel closed.")
-					return
-				}
-				fmt.Printf("[Main App] Received parameters: Domain=%s, Increment=%d, Proportion=%.2f\n",
-					params.Domain, params.TotalReqIncrement, params.RedistributionProportion)
-
-				nodesCount, _ := models.CountMetricsNodes(db)
-				if nodesCount > 0 {
-					bpr.ScheduleBPRRuns(db, 5*time.Second, params.Domain, "US-East")
-				}
-			}
+	if cfg.BPRSchedulingTasks != nil && len(cfg.BPRSchedulingTasks) > 0 {
+		nodesCount, errDb := models.CountMetricsNodes(db)
+		if errDb != nil {
+			log.Printf("Failed to count metrics nodes: %v. BPR scheduling might not start.", errDb)
 		}
-	}()
+
+		if nodesCount > 0 {
+			for _, task := range cfg.BPRSchedulingTasks {
+				wg.Add(1)
+				go func(t config.BPRSchedulingTaskConfig) {
+					defer wg.Done()
+					interval := time.Duration(t.IntervalSeconds) * time.Second
+					if t.IntervalSeconds <= 0 {
+						interval = 10 * time.Second
+						log.Printf("Warning: Invalid IntervalSeconds (%d) for domain %s, region %s. Using default: %v", t.IntervalSeconds, t.DomainName, t.Region, interval)
+					}
+					log.Printf("[Main App] Starting BPR scheduling for Domain=%s, Region=%s, Interval=%v",
+						t.DomainName, t.Region, interval)
+					bpr.ScheduleBPRRuns(ctx, db, interval, t.DomainName, t.Region)
+					log.Printf("BPR scheduling for domain %s, region %s stopped.", t.DomainName, t.Region)
+				}(task)
+			}
+		} else {
+			log.Println("[Main App] No metric nodes found. Skipping BPR scheduling based on config.")
+		}
+	} else {
+		log.Println("[Main App] No BPRSchedulingTasks found in configuration. BPR scheduling will not start.")
+	}
 
 	// Start Traefik config server
 	wg.Add(1)
