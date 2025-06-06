@@ -57,6 +57,21 @@ origin_ip = "192.168.1.100"
 
 # Node Region Configuration
 # Configure your data plane node clusters in node_regions.
+
+# domain_config table data
+# The parameters that need to be configured for the last-mile scheduling algorithm
+[[DomainConfigurations]]
+DomainName               = "example.com"
+TotalReqIncrement        = 100
+RedistributionProportion = 0.5
+
+# Define Last-mile scheduling tasks to be started
+# This tells the application for which (domain, region) combinations to start Last-mile
+[[BPRSchedulingTasks]]
+DomainName = "example.com"
+Region     = "US-East"
+IntervalSeconds = 10 # Scheduling interval in seconds (e.g., 10s)
+
 [[node_regions]]
 # Public IP address of the forwarding node
 ip          = "172.16.0.10"
@@ -86,6 +101,16 @@ description = "Primary API server in US East"
 # password = "StrongAppUserPassword456!"
 # dbname   = "myapp_db"
 
+# [[DomainConfigurations]]
+# DomainName               = "example.com"
+# TotalReqIncrement        = 100
+# RedistributionProportion = 0.5
+
+# [[BPRSchedulingTasks]]
+# DomainName = "example.com"
+# Region     = "US-East"
+# IntervalSeconds = 10 
+
 # [[domain_origins]]
 # domain    = "example.com"
 # origin_ip = "192.168.1.100"
@@ -95,10 +120,10 @@ description = "Primary API server in US East"
 # region      = "US-East"
 # hostname    = "node-use1-01.mydatacenter.com"
 # description = "Primary API server in US East"
+
 ```
 
-### *** After starting the scheduling and forwarding system, you need to access the scheduling node at http://localhost:4433 to fill in the last-mile scheduling algorithm parameters and initiate the last-mile scheduling. 
-### Finally, you can access http://[your traefik IP]/resolve/[your domain name]. For example, if your Traefik IP is 192.168.0.1 and the domain you want to accelerate is example.com, you can visit http://192.168.0.1/resolve/example.com.
+### *** After starting the scheduling and forwarding system, you can access http://[your traefik IP]/resolve/[your domain name]. For example, if your Traefik IP is 192.168.0.1 and the domain you want to accelerate is example.com, you can visit http://192.168.0.1/resolve/example.com.
 
 ## Database Schema
 
