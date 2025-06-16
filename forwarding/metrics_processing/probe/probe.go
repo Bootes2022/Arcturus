@@ -6,7 +6,7 @@ import (
 	"forwarding/metrics_processing/protocol"
 	"forwarding/metrics_processing/storage"
 	"forwarding/router"
-	"forwarding/scheduling_algorithms/k_shortest"
+	"forwarding/system_optimization"
 	"log"
 	"math"
 	"net"
@@ -53,7 +53,7 @@ func processRegionProbeResults(probes []*protocol.ProbeResult) ([]*protocol.Prob
 
 	k := 3
 	sensitivity := 1.5
-	outliers := k_shortest.DetectOutliersAdaptive(delays, k, sensitivity)
+	outliers := system_optimization.DetectOutliersAdaptive(delays, k, sensitivity)
 
 	outlierIndices := make(map[int]bool)
 	for _, outlier := range outliers {
